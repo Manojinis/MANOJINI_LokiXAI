@@ -107,7 +107,9 @@ class ModelHubPage(QWidget):
         self.model_combo.setCurrentText(self.settings.openai_model)
         model_row.addWidget(model_lbl)
         model_row.addWidget(self.model_combo)
-        o_layout.addLayout(model_row)
+        test_openai_btn = QPushButton("Test OpenAI Connection")
+        test_openai_btn.clicked.connect(self._test_openai_connection)
+        o_layout.addWidget(test_openai_btn)
 
         c_layout.addWidget(openai_card)
 
@@ -168,19 +170,30 @@ class ModelHubPage(QWidget):
     def _on_provider_changed(self):
         pass
 
+    def _test_openai_connection(self):
+        key = self.key_input.text().strip() or self.settings.openai_api_key
+        if not key:
+            QMessageBox.warning(self, "API Key Missing", "Please enter an OpenAI API key before testing connection.")
+            return
+
+        from src.lokixai.providers.openai_provider import OpenAIProvider
+        provider = OpenAIProvider(api_key=key)
+        ok, msg = provider.test_connection()
+        if ok:
+            QMessageBox.information(self, "OpenAI Connection Success", msg)
+        else:
+            QMessageBox.warning(self, "OpenAI Connection Failed", msg)
+
     def _test_local_connection(self):
         url = self.local_url_input.text().strip()
-        try:
-            import urllib.request
-            req = urllib.request.Request(url.replace("/v1", ""), method="GET")
-            with urllib.request.urlopen(req, timeout=3) as resp:
-                QMessageBox.information(self, "Connection Success", f"Connected successfully to local server at {url}!")
-        except Exception as e:
-            QMessageBox.warning(
-                self,
-                "Connection Warning",
-                f"Could not connect to {url}: {e}\n(Ensure Ollama is running: 'ollama serve')",
-            )
+        from src.lokixai.providers.local_provider import LocalProvider
+        provider = LocalProvider(base_url=url, model=self.local_model_input.text().strip())
+        ok, msg = provider.test_connection()
+        if ok:
+            QMessageBox.information(self, "Local Connection Status", msg)
+        else:
+            QMessageBox.warning(self, "Local Connection Status", msg)
+
 
     def _save_settings(self):
         self.settings.ai_provider = self.provider_combo.currentText()

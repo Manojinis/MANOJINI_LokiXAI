@@ -97,6 +97,21 @@ class SetBrightnessTool(BaseTool):
             )
 
 
+def _get_endpoint_volume():
+    import comtypes
+    comtypes.CoInitialize()
+    from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+    from ctypes import cast, POINTER
+
+    device = AudioUtilities.GetSpeakers()
+    if device is None:
+        raise RuntimeError("No audio output device found.")
+    if hasattr(device, "EndpointVolume"):
+        return device.EndpointVolume
+    interface = device.Activate(IAudioEndpointVolume._iid_, comtypes.CLSCTX_ALL, None)
+    return cast(interface, POINTER(IAudioEndpointVolume))
+
+
 class GetVolumeTool(BaseTool):
     name = "get_master_volume"
     description = "Retrieve the current master audio volume percentage and mute status."
@@ -104,14 +119,7 @@ class GetVolumeTool(BaseTool):
 
     def execute(self, **kwargs) -> ToolResult:
         try:
-            import comtypes
-            comtypes.CoInitialize()
-            from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
-            from ctypes import cast, POINTER
-
-            devices = AudioUtilities.GetSpeakers()
-            interface = devices.Activate(IAudioEndpointVolume._iid_, comtypes.CLSCTX_ALL, None)
-            volume = cast(interface, POINTER(IAudioEndpointVolume))
+            volume = _get_endpoint_volume()
             current = round(volume.GetMasterVolumeLevelScalar() * 100)
             is_muted = bool(volume.GetMute())
             return ToolResult(
@@ -135,14 +143,7 @@ class SetVolumeTool(BaseTool):
 
     def execute(self, level: int, **kwargs) -> ToolResult:
         try:
-            import comtypes
-            comtypes.CoInitialize()
-            from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
-            from ctypes import cast, POINTER
-
-            devices = AudioUtilities.GetSpeakers()
-            interface = devices.Activate(IAudioEndpointVolume._iid_, comtypes.CLSCTX_ALL, None)
-            volume = cast(interface, POINTER(IAudioEndpointVolume))
+            volume = _get_endpoint_volume()
             target_scalar = max(0.0, min(1.0, level / 100.0))
             volume.SetMasterVolumeLevelScalar(target_scalar, None)
             
@@ -172,14 +173,7 @@ class SetMuteTool(BaseTool):
 
     def execute(self, mute: bool, **kwargs) -> ToolResult:
         try:
-            import comtypes
-            comtypes.CoInitialize()
-            from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
-            from ctypes import cast, POINTER
-
-            devices = AudioUtilities.GetSpeakers()
-            interface = devices.Activate(IAudioEndpointVolume._iid_, comtypes.CLSCTX_ALL, None)
-            volume = cast(interface, POINTER(IAudioEndpointVolume))
+            volume = _get_endpoint_volume()
             volume.SetMute(1 if mute else 0, None)
             return ToolResult(
                 success=True,
@@ -192,6 +186,7 @@ class SetMuteTool(BaseTool):
                 error=str(e),
                 message=f"Failed to toggle audio mute: {e}",
             )
+
 
 
 class GetBatteryInfoTool(BaseTool):

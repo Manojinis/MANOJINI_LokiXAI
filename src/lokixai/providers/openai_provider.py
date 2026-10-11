@@ -24,11 +24,26 @@ class OpenAIProvider(BaseProvider):
         self._client: Optional[OpenAI] = None
 
     def _get_client(self) -> OpenAI:
-        if not self.api_key:
-            raise AuthenticationError("OpenAI API key not configured. Please add it in Settings.")
-        if self._client is None:
-            self._client = OpenAI(api_key=self.api_key, timeout=self.timeout)
-        return self._client
+        settings = get_settings()
+        api_key = self.api_key or settings.openai_api_key
+        if not api_key:
+            raise AuthenticationError("OpenAI API key not configured. Please add your key in Settings or Model Hub.")
+        timeout = self.timeout or settings.openai_timeout_seconds
+        return OpenAI(api_key=api_key, timeout=timeout)
+
+    def test_connection(self) -> tuple[bool, str]:
+        """Verify API key validity against OpenAI API."""
+        try:
+            client = self._get_client()
+            client.models.list()
+            return True, "Successfully connected to OpenAI API."
+        except AuthenticationError:
+            return False, "Authentication Error: Invalid OpenAI API key. Please check your credentials in Settings."
+        except APITimeoutError:
+            return False, "Timeout Error: OpenAI API took too long to respond. Check network connectivity."
+        except Exception as e:
+            return False, f"Connection Failed: {e}"
+
 
     def get_capabilities(self, model: str) -> ModelCapability:
         model_lower = model.lower()

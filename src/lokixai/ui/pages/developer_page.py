@@ -97,12 +97,16 @@ class DeveloperPage(QWidget):
         self.test_btn.clicked.connect(self._suggest_tests)
         self.sec_btn = QPushButton("Security Scan")
         self.sec_btn.clicked.connect(self._security_scan)
+        self.diff_btn = QPushButton("Review Patch Diff")
+        self.diff_btn.clicked.connect(self._review_diff)
 
         btn_row.addWidget(self.explain_btn)
         btn_row.addWidget(self.test_btn)
         btn_row.addWidget(self.sec_btn)
+        btn_row.addWidget(self.diff_btn)
         btn_row.addStretch()
         c_layout.addLayout(btn_row)
+
 
         self.console = QPlainTextEdit()
         self.console.setReadOnly(True)
@@ -174,3 +178,16 @@ class DeveloperPage(QWidget):
             "✓ Confirmation on Destructive Actions: Enabled\n"
             "✓ No Raw Shell or Eval Access: Verified"
         )
+
+    def _review_diff(self):
+        self.console.appendPlainText(
+            "\n== PROPOSED PATCH DIFF PREVIEW ==\n"
+            "--- a/src/lokixai/config/settings.py\n"
+            "+++ b/src/lokixai/config/settings.py\n"
+            "@@ -24,3 +24,3 @@\n"
+            "-    ai_provider: str = 'openai'\n"
+            "+    ai_provider: str = 'mock'\n"
+            "\n"
+            "Status: Read-only simulation. Changes require explicit confirmation before applying."
+        )
+

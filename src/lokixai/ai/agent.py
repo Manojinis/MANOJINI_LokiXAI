@@ -18,12 +18,14 @@ logger = logging.getLogger("lokixai.ai.agent")
 DEFAULT_SYSTEM_PROMPT = """You are LokiXAI, a high-performance, secure AI laptop copilot for Windows 11.
 Your role is to assist the user with natural-language laptop automation, telemetry monitoring, document analysis, and developer workflows.
 
-Guidelines:
-1. When asked to adjust brightness, master volume, launch workspaces, check battery, or open apps, ALWAYS call the corresponding registered tool.
-2. Never claim an action succeeded unless the tool execution explicitly returned success.
+Core Guidelines:
+1. Distinguish between explaining an action and performing it:
+   - If the user asks how to do something (e.g. "How can I check RAM usage?", "How do I increase brightness?"), provide a clear, helpful explanation. Do NOT invoke tools.
+   - If the user explicitly requests an action (e.g. "Check my RAM usage", "Set volume to 50", "Launch Coding workspace"), execute the verified tool from the registry.
+2. Never claim an action succeeded unless the tool execution result confirms success.
 3. Be concise, direct, helpful, and technically accurate.
-4. If a tool fails or requires permissions, explain clearly and suggest solutions.
-5. Never attempt unauthorized shell or file operations outside approved boundaries.
+4. If a tool fails or requires user confirmation, report the exact status honestly.
+5. Format code blocks using Markdown with language identifiers (e.g. ```python).
 """
 
 
@@ -36,11 +38,17 @@ class AgentOrchestrator:
         tool_registry: Optional[ToolRegistry] = None,
         max_turns: int = 5,
     ):
-        settings = get_settings()
-        self.provider = provider or get_provider(settings.ai_provider)
+        self._custom_provider = provider
         self.tool_registry = tool_registry or get_tool_registry()
         self.max_turns = max_turns
         self.is_cancelled = False
+
+    def get_active_provider(self) -> BaseProvider:
+        """Dynamically resolve active provider from settings if not overridden."""
+        if self._custom_provider:
+            return self._custom_provider
+        settings = get_settings()
+        return get_provider(settings.ai_provider)
 
     def cancel(self) -> None:
         """Signal the agent loop to stop processing."""
@@ -56,11 +64,20 @@ class AgentOrchestrator:
         on_tool_end: Optional[Callable[[str, ToolResult], None]] = None,
     ) -> str:
         """Execute one complete conversational turn with bounded tool calling."""
+        if self.is_cancelled:
+            self.is_cancelled = False
+            msg = "[Operation cancelled by user]"
+            if on_token:
+                on_token(msg)
+            session.add_assistant_message(msg)
+            return msg
         self.is_cancelled = False
         session.add_user_message(user_input)
         tools_schema = self.tool_registry.get_openai_tools()
+        active_provider = self.get_active_provider()
 
         accumulated_response = ""
+
 
         for turn_idx in range(self.max_turns):
             if self.is_cancelled:
@@ -73,7 +90,7 @@ class AgentOrchestrator:
             llm_msgs = session.to_llm_messages(system_prompt=DEFAULT_SYSTEM_PROMPT)
 
             try:
-                response = self.provider.generate(
+                response = active_provider.generate(
                     messages=llm_msgs,
                     tools=tools_schema if tools_schema else None,
                 )

@@ -69,6 +69,10 @@ class FilesPage(QWidget):
         self.search_input.textChanged.connect(self._on_filter_changed)
         nav_box.addWidget(self.search_input)
 
+        self.up_btn = QPushButton("⬆ Up")
+        self.up_btn.clicked.connect(self._navigate_up)
+        nav_box.addWidget(self.up_btn)
+
         refresh_btn = QPushButton("🔄 Refresh")
         refresh_btn.clicked.connect(self._load_files)
         nav_box.addWidget(refresh_btn)
@@ -91,8 +95,10 @@ class FilesPage(QWidget):
         self.table.verticalHeader().setVisible(False)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.itemSelectionChanged.connect(self._on_selection_changed)
+        self.table.cellDoubleClicked.connect(self._on_item_double_clicked)
         t_layout.addWidget(self.table)
         splitter.addWidget(table_card)
+
 
         # Preview Card
         preview_card = QFrame()
@@ -133,6 +139,28 @@ class FilesPage(QWidget):
     def _on_root_changed(self, idx: int):
         self.current_root = self.root_combo.currentText()
         self._load_files()
+
+    def _navigate_up(self):
+        curr = Path(self.current_root)
+        parent = curr.parent
+        guard = self.manager.get_guard()
+        if guard.is_safe_path(parent):
+            self.current_root = str(parent)
+            self._load_files()
+        else:
+            QMessageBox.information(self, "Boundary", "Already at the approved directory boundary.")
+
+    def _on_item_double_clicked(self, row: int, col: int):
+        item = self.table.item(row, 0)
+        if item:
+            path_str = item.data(Qt.UserRole)
+            target = Path(path_str)
+            if target.is_dir():
+                guard = self.manager.get_guard()
+                if guard.is_safe_path(target):
+                    self.current_root = str(target)
+                    self._load_files()
+
 
     def _load_files(self):
         try:

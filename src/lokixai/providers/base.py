@@ -65,3 +65,8 @@ class BaseProvider(ABC):
     def embed(self, texts: List[str], model: Optional[str] = None) -> List[List[float]]:
         """Optional vector embeddings generation."""
         raise NotImplementedError("Embeddings not supported by this provider.")
+
+    def test_connection(self) -> tuple[bool, str]:
+        """Test whether provider endpoint and credentials are operational."""
+        return True, "Provider is operational."
+

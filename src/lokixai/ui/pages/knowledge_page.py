@@ -64,6 +64,20 @@ class KnowledgePage(QWidget):
 
         layout.addWidget(tool_frame)
 
+        # Document chips frame
+        self.docs_chip_frame = QFrame()
+        self.docs_chip_frame.setStyleSheet("background: transparent;")
+        self.chips_layout = QHBoxLayout(self.docs_chip_frame)
+        self.chips_layout.setContentsMargins(0, 0, 0, 0)
+        self.chips_layout.setSpacing(8)
+        self._refresh_doc_chips()
+        layout.addWidget(self.docs_chip_frame)
+
+        # Disclosure notice
+        privacy_note = QLabel("🔒 Privacy Notice: Documents are chunked locally. When cloud embeddings are configured, passages are securely embedded. When offline, local hash indexing is used.")
+        privacy_note.setStyleSheet("font-size: 11px; color: #64748b; font-style: italic;")
+        layout.addWidget(privacy_note)
+
         # Semantic Query Input
         search_box = QHBoxLayout()
         self.query_input = QLineEdit()
@@ -100,6 +114,32 @@ class KnowledgePage(QWidget):
         scroll.setWidget(self.results_container)
         layout.addWidget(scroll, 1)
 
+    def _refresh_doc_chips(self):
+        while self.chips_layout.count() > 0:
+            item = self.chips_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        for doc_name, entry in list(self.store.indexed_files.items()):
+            chip = QPushButton(f"📄 {doc_name} ({entry.chunk_count} chunks) ✕")
+            chip.setStyleSheet("""
+                background-color: #141e33;
+                border: 1px solid #1e293b;
+                border-radius: 6px;
+                color: #38bdf8;
+                padding: 4px 10px;
+                font-size: 11px;
+            """)
+            chip.setToolTip("Click to remove from index")
+            chip.clicked.connect(lambda checked=False, name=doc_name: self._remove_doc(name))
+            self.chips_layout.addWidget(chip)
+        self.chips_layout.addStretch()
+
+    def _remove_doc(self, doc_name: str):
+        self.store.remove_document(doc_name)
+        self.status_lbl.setText(f"Removed {doc_name}. Total docs: {len(self.store.indexed_files)}")
+        self._refresh_doc_chips()
+
     def _select_and_index(self):
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Select Document", "", "Documents (*.pdf *.txt *.md *.py *.json)"
@@ -110,9 +150,13 @@ class KnowledgePage(QWidget):
         self.status_lbl.setText("Extracting text and computing embeddings...")
         try:
             count = self.store.add_document(file_path)
-            self.status_lbl.setText(
-                f"✓ Indexed {Path(file_path).name} ({count} chunks). Total docs: {len(self.store.indexed_files)}"
-            )
+            if count == 0:
+                self.status_lbl.setText(f"⚠️ Document '{Path(file_path).name}' contains no extractable text (Scanned image or empty).")
+            else:
+                self.status_lbl.setText(
+                    f"✓ Indexed {Path(file_path).name} ({count} chunks). Total docs: {len(self.store.indexed_files)}"
+                )
+                self._refresh_doc_chips()
         except Exception as e:
             self.status_lbl.setText(f"❌ Indexing failed: {e}")
 

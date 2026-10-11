@@ -68,7 +68,13 @@ class AuditPage(QWidget):
         export_btn.clicked.connect(self._export_log)
         top_bar.addWidget(export_btn)
 
+        clear_btn = QPushButton("🗑️ Clear Log")
+        clear_btn.setObjectName("DangerButton")
+        clear_btn.clicked.connect(self._clear_log)
+        top_bar.addWidget(clear_btn)
+
         layout.addLayout(top_bar)
+
 
         # Audit Table
         self.table = QTableWidget()
@@ -122,3 +128,21 @@ class AuditPage(QWidget):
                 QMessageBox.information(self, "Export Complete", f"Audit log exported to:\n{path}")
             except Exception as e:
                 QMessageBox.warning(self, "Export Failed", str(e))
+
+    def _clear_log(self):
+        reply = QMessageBox.question(
+            self,
+            "Confirm Clear Log",
+            "Are you sure you want to clear the audit action log?",
+            QMessageBox.Yes | QMessageBox.No,
+        )
+        if reply == QMessageBox.Yes:
+            self.audit._history.clear()
+            try:
+                with open(self.audit.log_file, "w", encoding="utf-8") as f:
+                    f.write("")
+            except Exception:
+                pass
+            self._reload_table()
+            QMessageBox.information(self, "Audit Log", "Audit log has been cleared.")
+

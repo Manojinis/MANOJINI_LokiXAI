@@ -56,6 +56,37 @@ class SettingsPage(QWidget):
         c_layout.setContentsMargins(0, 0, 0, 0)
         c_layout.setSpacing(16)
 
+        # 0. AI Provider Card
+        ai_card = QFrame()
+        ai_card.setObjectName("CardFrame")
+        ail = QVBoxLayout(ai_card)
+        ail.setContentsMargins(16, 16, 16, 16)
+        ail.setSpacing(10)
+        ail.addWidget(QLabel("AI PROVIDER & CREDENTIALS"))
+
+        prov_row = QHBoxLayout()
+        prov_lbl = QLabel("Active Provider:")
+        prov_lbl.setFixedWidth(130)
+        self.provider_combo = QComboBox()
+        self.provider_combo.addItems(["openai", "local", "mock"])
+        self.provider_combo.setCurrentText(self.settings.ai_provider)
+        prov_row.addWidget(prov_lbl)
+        prov_row.addWidget(self.provider_combo, 1)
+        ail.addLayout(prov_row)
+
+        key_row = QHBoxLayout()
+        key_lbl = QLabel("OpenAI API Key:")
+        key_lbl.setFixedWidth(130)
+        self.key_input = QLineEdit()
+        self.key_input.setEchoMode(QLineEdit.Password)
+        self.key_input.setText(self.settings.openai_api_key or "")
+        self.key_input.setPlaceholderText("sk-...")
+        key_row.addWidget(key_lbl)
+        key_row.addWidget(self.key_input, 1)
+        ail.addLayout(key_row)
+
+        c_layout.addWidget(ai_card)
+
         # 1. Security & Privacy Card
         sec_card = QFrame()
         sec_card.setObjectName("CardFrame")
@@ -63,6 +94,7 @@ class SettingsPage(QWidget):
         sl.setContentsMargins(16, 16, 16, 16)
         sl.setSpacing(10)
         sl.addWidget(QLabel("SECURITY & PERMISSION GUARD"))
+
 
         self.auto_safe_chk = QCheckBox("Auto-approve safe read-only and non-destructive tools")
         self.auto_safe_chk.setChecked(self.settings.auto_approve_safe_tools)
@@ -122,6 +154,10 @@ class SettingsPage(QWidget):
         layout.addWidget(scroll, 1)
 
     def _save_preferences(self):
+        self.settings.ai_provider = self.provider_combo.currentText()
+        new_key = self.key_input.text().strip()
+        if new_key:
+            self.settings.openai_api_key = new_key
         self.settings.auto_approve_safe_tools = self.auto_safe_chk.isChecked()
         self.settings.require_confirmation_destructive = self.require_confirm_chk.isChecked()
         self.settings.tts_enabled = self.tts_enable_chk.isChecked()
@@ -133,6 +169,7 @@ class SettingsPage(QWidget):
 
         self.settings.save()
         QMessageBox.information(self, "Settings Saved", "Your configuration has been updated.")
+
 
     def _reset_defaults(self):
         self.auto_safe_chk.setChecked(True)

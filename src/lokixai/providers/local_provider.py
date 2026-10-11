@@ -15,12 +15,39 @@ logger = logging.getLogger("lokixai.providers.local")
 class LocalProvider(BaseProvider):
     """Integrates with local Ollama, vLLM, or LMStudio servers."""
 
-    def __init__(self, base_url: Optional[str] = None, model: Optional[str] = None):
+    def _get_client(self) -> OpenAI:
         settings = get_settings()
-        self.base_url = base_url or settings.local_ai_base_url
-        self.default_model = model or settings.local_ai_model
-        self.api_key = settings.local_ai_api_key or "ollama"
-        self._client = OpenAI(base_url=self.base_url, api_key=self.api_key)
+        base_url = self.base_url or settings.local_ai_base_url
+        api_key = settings.local_ai_api_key or "ollama"
+        return OpenAI(base_url=base_url, api_key=api_key)
+
+    def test_connection(self) -> tuple[bool, str]:
+        """Verify connectivity to local Ollama / vLLM endpoint."""
+        settings = get_settings()
+        base_url = self.base_url or settings.local_ai_base_url
+        import urllib.request
+        import urllib.error
+        import json
+
+        # Check Ollama tags or standard root
+        test_url = base_url.rstrip("/v1") + "/api/tags"
+        try:
+            req = urllib.request.Request(test_url, method="GET")
+            with urllib.request.urlopen(req, timeout=3) as resp:
+                data = json.loads(resp.read().decode())
+                models = [m.get("name", "") for m in data.get("models", [])]
+                if models:
+                    return True, f"Ollama is running. Available models: {', '.join(models[:4])}"
+                return True, "Ollama is running, but no models found. Run: 'ollama pull llama3.2'"
+        except urllib.error.URLError:
+            # Fall back to testing root or /v1
+            try:
+                client = self._get_client()
+                client.models.list()
+                return True, f"Connected to OpenAI-compatible local server at {base_url}."
+            except Exception as e:
+                return False, f"Could not connect to {base_url}. Ensure Ollama is running ('ollama serve'). Error: {e}"
+
 
     def get_capabilities(self, model: str) -> ModelCapability:
         return ModelCapability(

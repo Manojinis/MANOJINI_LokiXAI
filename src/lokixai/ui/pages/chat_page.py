@@ -1,21 +1,23 @@
-"""AI Conversation workspace with tool execution cards and streaming responses."""
+"""AI Conversation workspace with tool execution cards, rich markdown, and multi-line composer."""
 
 from __future__ import annotations
 
+import html
 import json
+import re
 from typing import Any, Dict, Optional
-from PySide6.QtCore import QObject, QThread, Qt, Signal
+from PySide6.QtCore import QObject, QThread, Qt, Signal, QTimer
+from PySide6.QtGui import QGuiApplication, QKeyEvent
 from PySide6.QtWidgets import (
+    QDialog,
     QFileDialog,
     QFrame,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QPlainTextEdit,
     QPushButton,
     QScrollArea,
     QSizePolicy,
-    QSplitter,
     QVBoxLayout,
     QWidget,
 )
@@ -29,6 +31,36 @@ from src.lokixai.ui.components.dialogs import ConfirmationDialog
 from src.lokixai.voice.tts_engine import get_tts_engine
 
 
+class ChatInputTextEdit(QPlainTextEdit):
+    """Multi-line composer that submits on Enter and inserts newline on Shift+Enter."""
+
+    submit_requested = Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setPlaceholderText("Ask LokiXAI anything or command laptop settings... (Enter to send, Shift+Enter for newline)")
+        self.setFixedHeight(44)
+        self.setStyleSheet("""
+            background-color: #0c1322;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            color: #f8fafc;
+            padding: 8px 10px;
+            font-size: 13px;
+        """)
+
+    def keyPressEvent(self, event: QKeyEvent):
+        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
+            if event.modifiers() & Qt.ShiftModifier:
+                super().keyPressEvent(event)
+            else:
+                self.submit_requested.emit()
+                event.accept()
+                return
+        else:
+            super().keyPressEvent(event)
+
+
 class AgentWorker(QObject):
     """Executes AI turns in a background thread to prevent UI freezing."""
 
@@ -37,7 +69,6 @@ class AgentWorker(QObject):
     tool_finished = Signal(str, object)
     finished = Signal(str)
     error_occurred = Signal(str)
-    confirmation_requested = Signal(str, dict, object)
 
     def __init__(
         self,
@@ -77,12 +108,14 @@ class ChatPage(QWidget):
         self.orchestrator = AgentOrchestrator()
         self.active_worker_thread: Optional[QThread] = None
         self._current_assistant_bubble = None
+        self._current_assistant_raw_text = ""
+        self._is_generating = False
         self._init_ui()
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(12)
+        layout.setSpacing(10)
 
         # Chat top toolbar
         top_bar = QHBoxLayout()
@@ -113,8 +146,12 @@ class ChatPage(QWidget):
         self.msg_layout = QVBoxLayout(self.messages_container)
         self.msg_layout.setContentsMargins(16, 16, 16, 16)
         self.msg_layout.setSpacing(12)
-        self.msg_layout.addStretch()
 
+        # Empty state suggestion pill container
+        self.suggestions_frame = self._create_suggestions_widget()
+        self.msg_layout.addWidget(self.suggestions_frame)
+
+        self.msg_layout.addStretch()
         self.scroll.setWidget(self.messages_container)
         layout.addWidget(self.scroll, 1)
 
@@ -138,11 +175,9 @@ class ChatPage(QWidget):
         attach_btn.clicked.connect(self._on_attach_file)
         c_layout.addWidget(attach_btn)
 
-        # Text input
-        self.input_edit = QLineEdit()
-        self.input_edit.setPlaceholderText("Ask LokiXAI anything or command laptop settings...")
-        self.input_edit.setFixedHeight(38)
-        self.input_edit.returnPressed.connect(self._send_message)
+        # Multi-line Text input
+        self.input_edit = ChatInputTextEdit()
+        self.input_edit.submit_requested.connect(self._send_message)
         c_layout.addWidget(self.input_edit, 1)
 
         # Mic button
@@ -152,58 +187,126 @@ class ChatPage(QWidget):
         self.mic_btn.clicked.connect(self._on_mic_clicked)
         c_layout.addWidget(self.mic_btn)
 
-        # Send button
+        # Send / Stop button
         self.send_btn = QPushButton("Send")
         self.send_btn.setObjectName("PrimaryButton")
-        self.send_btn.setFixedHeight(38)
-        self.send_btn.clicked.connect(self._send_message)
+        self.send_btn.setFixedHeight(36)
+        self.send_btn.setMinimumWidth(75)
+        self.send_btn.clicked.connect(self._on_send_or_stop_clicked)
         c_layout.addWidget(self.send_btn)
 
         layout.addWidget(composer_frame)
 
-        # Welcome initial bubble
-        self._add_assistant_message(
-            "Greetings! I am LokiXAI, your laptop automation copilot. "
-            "I can adjust brightness & volume, launch workspaces, monitor system telemetry, inspect files, and automate routines. How may I assist you?"
-        )
+    def _create_suggestions_widget(self) -> QFrame:
+        frame = QFrame()
+        frame.setStyleSheet("background: transparent;")
+        l = QVBoxLayout(frame)
+        l.setContentsMargins(0, 8, 0, 8)
+        l.setSpacing(8)
+
+        intro = QLabel("⚡ Welcome to LokiXAI. Try one of these prompts or type your own:")
+        intro.setStyleSheet("font-size: 13px; color: #94a3b8; font-weight: 500;")
+        l.addWidget(intro)
+
+        pills = [
+            ("🧠 What is Artificial Intelligence?", "What is artificial intelligence? Explain it in simple words with an example."),
+            ("💻 Explain JavaScript Promises", "Explain JavaScript promises with examples."),
+            ("📊 Check Current Laptop RAM", "Check my current laptop RAM usage and tell me how much is being used."),
+            ("⚡ Launch Coding Workspace", "Launch Coding workspace"),
+            ("🔁 Explain Java vs. Python", "Explain the difference between Java and Python."),
+        ]
+
+        pills_layout = QHBoxLayout()
+        pills_layout.setSpacing(8)
+        for label, prompt in pills[:3]:
+            btn = QPushButton(label)
+            btn.setStyleSheet("""
+                background-color: #141e33;
+                border: 1px solid #1e293b;
+                border-radius: 8px;
+                color: #00f2fe;
+                padding: 6px 12px;
+                font-size: 12px;
+            """)
+            btn.setCursor(Qt.PointingHandCursor)
+            btn.clicked.connect(lambda checked=False, p=prompt: self.send_prompt(p))
+            pills_layout.addWidget(btn)
+        pills_layout.addStretch()
+        l.addLayout(pills_layout)
+
+        pills_layout2 = QHBoxLayout()
+        pills_layout2.setSpacing(8)
+        for label, prompt in pills[3:]:
+            btn = QPushButton(label)
+            btn.setStyleSheet("""
+                background-color: #141e33;
+                border: 1px solid #1e293b;
+                border-radius: 8px;
+                color: #38bdf8;
+                padding: 6px 12px;
+                font-size: 12px;
+            """)
+            btn.setCursor(Qt.PointingHandCursor)
+            btn.clicked.connect(lambda checked=False, p=prompt: self.send_prompt(p))
+            pills_layout2.addWidget(btn)
+        pills_layout2.addStretch()
+        l.addLayout(pills_layout2)
+
+        return frame
 
     def _on_new_chat(self):
         self.session = ConversationSession()
         self.session_title_lbl.setText("Active Session: New Conversation")
         self._clear_bubbles()
-        self._add_assistant_message("Started a new session. How can I help you today?")
+        self.suggestions_frame.show()
 
     def _on_clear_chat(self):
         self._clear_bubbles()
+        self.suggestions_frame.show()
 
     def _clear_bubbles(self):
-        while self.msg_layout.count() > 1:
-            item = self.msg_layout.takeAt(0)
-            if item.widget():
+        # Keep suggestions_frame and the stretch at the end
+        while self.msg_layout.count() > 2:
+            item = self.msg_layout.takeAt(1)
+            if item.widget() and item.widget() != self.suggestions_frame:
                 item.widget().deleteLater()
 
     def send_prompt(self, prompt: str):
-        """Programmatically inject prompt from quick actions or voice."""
-        self.input_edit.setText(prompt)
+        """Programmatically inject prompt and send immediately."""
+        self.input_edit.setPlainText(prompt)
         self._send_message()
 
+    def _on_send_or_stop_clicked(self):
+        if self._is_generating:
+            # Stop action
+            self.orchestrator.cancel()
+            self.send_btn.setText("Stopping...")
+            self.send_btn.setEnabled(False)
+        else:
+            self._send_message()
+
     def _send_message(self):
-        text = self.input_edit.text().strip()
+        text = self.input_edit.toPlainText().strip()
         if not text:
             return
 
         self.input_edit.clear()
+        self.suggestions_frame.hide()
         self._add_user_message(text)
 
-        # Prepare for assistant reply
+        # Prepare assistant bubble
+        self._current_assistant_raw_text = ""
         self._current_assistant_bubble = self._create_assistant_bubble_widget()
         self.msg_layout.insertWidget(self.msg_layout.count() - 1, self._current_assistant_bubble)
         self._scroll_to_bottom()
 
-        self.send_btn.setEnabled(False)
-        self.send_btn.setText("Processing...")
+        self._is_generating = True
+        self.send_btn.setText("■ Stop")
+        self.send_btn.setObjectName("DangerButton")
+        self.send_btn.style().unpolish(self.send_btn)
+        self.send_btn.style().polish(self.send_btn)
 
-        # Run in background QThread
+        # Background thread
         self.thread = QThread()
         self.worker = AgentWorker(
             orchestrator=self.orchestrator,
@@ -224,15 +327,40 @@ class ChatPage(QWidget):
         self.thread.start()
 
     def _handle_confirmation(self, tool_name: str, args: Dict[str, Any], level: PermissionLevel) -> bool:
-        # Display modal confirmation dialog
         dlg = ConfirmationDialog(tool_name, args, level, self)
         return dlg.exec() == QDialog.Accepted
 
+    def _format_markdown(self, raw_text: str) -> str:
+        """Convert basic markdown (headers, code blocks, lists, bold) to styled HTML."""
+        escaped = html.escape(raw_text)
+
+        # Code blocks
+        def _code_block(match):
+            code = match.group(1).strip()
+            return f'<div style="background-color: #0c1322; border: 1px solid #1e293b; border-radius: 6px; padding: 10px; margin: 8px 0; font-family: Consolas, monospace; color: #38bdf8; white-space: pre-wrap;">{code}</div>'
+
+        escaped = re.sub(r'```(?:[a-zA-Z0-9_\-]+)?\n(.*?)```', _code_block, escaped, flags=re.DOTALL)
+
+        # Inline code
+        escaped = re.sub(r'`([^`]+)`', r'<code style="background-color: #0c1322; padding: 2px 5px; border-radius: 4px; color: #00f2fe; font-family: monospace;">\1</code>', escaped)
+
+        # Bold
+        escaped = re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', escaped)
+
+        # Bullet points
+        escaped = re.sub(r'^[•\*\-]\s+(.+)$', r'• \1', escaped, flags=re.MULTILINE)
+
+        # Convert newlines to breaks except inside code
+        lines = escaped.split('\n')
+        formatted = '<br>'.join(lines)
+        return formatted
+
     def _on_token(self, token: str):
+        self._current_assistant_raw_text += token
         if self._current_assistant_bubble:
             lbl = self._current_assistant_bubble.findChild(QLabel, "BubbleText")
             if lbl:
-                lbl.setText(lbl.text() + token)
+                lbl.setText(self._format_markdown(self._current_assistant_raw_text))
                 self._scroll_to_bottom()
 
     def _on_tool_started(self, name: str, args: dict):
@@ -245,9 +373,9 @@ class ChatPage(QWidget):
         """)
         l = QVBoxLayout(card)
         l.setSpacing(2)
-        h = QLabel(f"⚙️ Calling Tool: {name}")
+        h = QLabel(f"⚙️ Calling Verified Tool: {name}")
         h.setStyleSheet("color: #f59e0b; font-weight: 700; font-size: 11px;")
-        p = QLabel(f"Arguments: {json.dumps(args)}")
+        p = QLabel(f"Parameters: {json.dumps(args)}")
         p.setStyleSheet("color: #94a3b8; font-size: 10px; font-family: monospace;")
         l.addWidget(h)
         l.addWidget(p)
@@ -277,23 +405,40 @@ class ChatPage(QWidget):
         self._scroll_to_bottom()
 
     def _on_turn_finished(self, final_text: str):
+        self._is_generating = False
         self.send_btn.setEnabled(True)
         self.send_btn.setText("Send")
+        self.send_btn.setObjectName("PrimaryButton")
+        self.send_btn.style().unpolish(self.send_btn)
+        self.send_btn.style().polish(self.send_btn)
+
         if self.thread:
             self.thread.quit()
+
+        # Update bubble text fully formatted
+        if self._current_assistant_bubble:
+            lbl = self._current_assistant_bubble.findChild(QLabel, "BubbleText")
+            if lbl:
+                lbl.setText(self._format_markdown(final_text or self._current_assistant_raw_text))
+
         self.store.save_session(self.session)
         self.session_title_lbl.setText(f"Active Session: {self.session.title}")
-        get_tts_engine().speak(final_text[:200])
+        get_tts_engine().speak(final_text[:250])
 
     def _on_turn_error(self, err: str):
+        self._is_generating = False
         self.send_btn.setEnabled(True)
         self.send_btn.setText("Send")
+        self.send_btn.setObjectName("PrimaryButton")
+        self.send_btn.style().unpolish(self.send_btn)
+        self.send_btn.style().polish(self.send_btn)
+
         if self.thread:
             self.thread.quit()
         if self._current_assistant_bubble:
             lbl = self._current_assistant_bubble.findChild(QLabel, "BubbleText")
             if lbl:
-                lbl.setText(lbl.text() + f"\n\n[Error: {err}]")
+                lbl.setText(lbl.text() + f"<br><br><span style='color: #ef4444;'>[Error: {html.escape(err)}]</span>")
 
     def _add_user_message(self, text: str):
         bubble = QFrame()
@@ -309,6 +454,7 @@ class ChatPage(QWidget):
         t = QLabel(text)
         t.setStyleSheet("font-size: 13px; color: #f8fafc;")
         t.setWordWrap(True)
+        t.setTextInteractionFlags(Qt.TextSelectableByMouse)
         l.addWidget(h)
         l.addWidget(t)
         self.msg_layout.insertWidget(self.msg_layout.count() - 1, bubble)
@@ -324,43 +470,62 @@ class ChatPage(QWidget):
             margin-right: 80px;
         """)
         l = QVBoxLayout(bubble)
+        l.setSpacing(6)
+
+        # Bubble header with copy button
+        top = QHBoxLayout()
         h = QLabel("⚡ LokiXAI")
         h.setStyleSheet("font-size: 11px; font-weight: 700; color: #00f2fe;")
+        top.addWidget(h)
+        top.addStretch()
+
+        copy_btn = QPushButton("📋 Copy")
+        copy_btn.setFixedSize(56, 22)
+        copy_btn.setStyleSheet("""
+            background-color: #0c1322;
+            border: 1px solid #1e293b;
+            border-radius: 4px;
+            color: #94a3b8;
+            font-size: 10px;
+        """)
+        copy_btn.setCursor(Qt.PointingHandCursor)
+        copy_btn.clicked.connect(lambda: self._copy_bubble_text(bubble))
+        top.addWidget(copy_btn)
+        l.addLayout(top)
+
         t = QLabel("")
         t.setObjectName("BubbleText")
-        t.setStyleSheet("font-size: 13px; color: #f8fafc; line-height: 1.4;")
+        t.setStyleSheet("font-size: 13px; color: #f8fafc; line-height: 1.45;")
         t.setWordWrap(True)
         t.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        l.addWidget(h)
+        t.setTextFormat(Qt.RichText)
         l.addWidget(t)
         return bubble
 
-    def _add_assistant_message(self, text: str):
-        bubble = self._create_assistant_bubble_widget()
+    def _copy_bubble_text(self, bubble: QFrame):
         lbl = bubble.findChild(QLabel, "BubbleText")
         if lbl:
-            lbl.setText(text)
-        self.msg_layout.insertWidget(self.msg_layout.count() - 1, bubble)
-        self._scroll_to_bottom()
+            # Clean copy
+            clipboard = QGuiApplication.clipboard()
+            clipboard.setText(self._current_assistant_raw_text or lbl.text())
 
     def _scroll_to_bottom(self):
-        from PySide6.QtCore import QTimer
-        QTimer.singleShot(50, lambda: self.scroll.verticalScrollBar().setValue(
-            self.scroll.verticalScrollBar().maximum()
-        ))
+        v_bar = self.scroll.verticalScrollBar()
+        # Only auto scroll if near bottom or just sent
+        if (v_bar.maximum() - v_bar.value()) < 150 or not self._is_generating:
+            QTimer.singleShot(40, lambda: v_bar.setValue(v_bar.maximum()))
 
     def _on_attach_file(self):
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Attach Document", "", "Documents (*.pdf *.txt *.md *.py *.json)"
         )
         if file_path:
-            self.input_edit.setText(f"Analyze attached document: {file_path}")
+            self.input_edit.setPlainText(f"Analyze attached document: {file_path}")
 
     def _on_mic_clicked(self):
-        # Trigger voice transcription test
         from src.lokixai.voice.stt_engine import get_stt_engine
         stt = get_stt_engine()
         stt.start_recording()
         text = stt.stop_recording_and_transcribe()
         if text:
-            self.input_edit.setText(text)
+            self.input_edit.setPlainText(text)

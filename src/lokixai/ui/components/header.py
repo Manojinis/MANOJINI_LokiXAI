@@ -90,4 +90,27 @@ class Header(QFrame):
         self.metric_pill.setText(f"CPU: {m.cpu_percent}% | RAM: {m.ram_percent}% | Bat: {bat_str}")
 
     def set_model_label(self, provider: str, model_name: str):
-        self.model_pill.setText(f"🤖 {provider}: {model_name}")
+        p_lower = provider.lower()
+        if "mock" in p_lower:
+            self.model_pill.setText("🤖 Mock Core (Offline)")
+            self.model_pill.setStyleSheet("""
+                background-color: rgba(245, 158, 11, 0.12);
+                color: #f59e0b;
+                border: 1px solid rgba(245, 158, 11, 0.35);
+                border-radius: 14px;
+                padding: 4px 12px;
+                font-size: 11px;
+                font-weight: 600;
+            """)
+        else:
+            self.model_pill.setText(f"🤖 {provider.upper()}: {model_name}")
+            self.model_pill.setStyleSheet("""
+                background-color: rgba(0, 242, 254, 0.12);
+                color: #00f2fe;
+                border: 1px solid rgba(0, 242, 254, 0.35);
+                border-radius: 14px;
+                padding: 4px 12px;
+                font-size: 11px;
+                font-weight: 600;
+            """)
+
