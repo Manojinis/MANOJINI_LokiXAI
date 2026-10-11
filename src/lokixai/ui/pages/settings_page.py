@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -25,6 +25,9 @@ from src.lokixai.config.settings import get_settings
 class SettingsPage(QWidget):
     """Central settings manager for LokiXAI application."""
 
+    theme_changed = Signal(str)
+    provider_changed = Signal(str)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.settings = get_settings()
@@ -38,9 +41,9 @@ class SettingsPage(QWidget):
         # Header
         title_box = QVBoxLayout()
         h = QLabel("⚙️ Settings & System Personalization")
-        h.setStyleSheet("font-size: 18px; font-weight: 700; color: #00f2fe;")
-        s = QLabel("Configure security permissions, approved directory boundaries, and application behavior.")
-        s.setStyleSheet("font-size: 12px; color: #94a3b8;")
+        h.setStyleSheet("font-size: 18px; font-weight: 700; color: #0284c7;")
+        s = QLabel("Configure appearance themes, AI credentials, security boundaries, and preferences.")
+        s.setStyleSheet("font-size: 12px; color: #64748b;")
         title_box.addWidget(h)
         title_box.addWidget(s)
         layout.addLayout(title_box)
@@ -56,7 +59,27 @@ class SettingsPage(QWidget):
         c_layout.setContentsMargins(0, 0, 0, 0)
         c_layout.setSpacing(16)
 
-        # 0. AI Provider Card
+        # 0. Appearance & Theme Card
+        theme_card = QFrame()
+        theme_card.setObjectName("CardFrame")
+        tl = QVBoxLayout(theme_card)
+        tl.setContentsMargins(16, 16, 16, 16)
+        tl.setSpacing(10)
+        tl.addWidget(QLabel("APPEARANCE & THEME"))
+
+        theme_row = QHBoxLayout()
+        theme_lbl = QLabel("Interface Theme:")
+        theme_lbl.setFixedWidth(130)
+        self.theme_combo = QComboBox()
+        self.theme_combo.addItems(["dark", "light", "system"])
+        self.theme_combo.setCurrentText(self.settings.theme or "dark")
+        self.theme_combo.currentTextChanged.connect(self._on_theme_changed)
+        theme_row.addWidget(theme_lbl)
+        theme_row.addWidget(self.theme_combo, 1)
+        tl.addLayout(theme_row)
+        c_layout.addWidget(theme_card)
+
+        # 1. AI Provider Card (Zero-Mock Policy: OpenAI and Local Ollama only)
         ai_card = QFrame()
         ai_card.setObjectName("CardFrame")
         ail = QVBoxLayout(ai_card)
@@ -68,8 +91,9 @@ class SettingsPage(QWidget):
         prov_lbl = QLabel("Active Provider:")
         prov_lbl.setFixedWidth(130)
         self.provider_combo = QComboBox()
-        self.provider_combo.addItems(["openai", "local", "mock"])
-        self.provider_combo.setCurrentText(self.settings.ai_provider)
+        self.provider_combo.addItems(["openai", "local"])
+        current_p = self.settings.ai_provider if self.settings.ai_provider in ("openai", "local") else "openai"
+        self.provider_combo.setCurrentText(current_p)
         prov_row.addWidget(prov_lbl)
         prov_row.addWidget(self.provider_combo, 1)
         ail.addLayout(prov_row)
@@ -87,14 +111,13 @@ class SettingsPage(QWidget):
 
         c_layout.addWidget(ai_card)
 
-        # 1. Security & Privacy Card
+        # 2. Security & Privacy Card
         sec_card = QFrame()
         sec_card.setObjectName("CardFrame")
         sl = QVBoxLayout(sec_card)
         sl.setContentsMargins(16, 16, 16, 16)
         sl.setSpacing(10)
         sl.addWidget(QLabel("SECURITY & PERMISSION GUARD"))
-
 
         self.auto_safe_chk = QCheckBox("Auto-approve safe read-only and non-destructive tools")
         self.auto_safe_chk.setChecked(self.settings.auto_approve_safe_tools)
@@ -106,7 +129,7 @@ class SettingsPage(QWidget):
 
         c_layout.addWidget(sec_card)
 
-        # 2. Approved Directories Card
+        # 3. Approved Directories Card
         dir_card = QFrame()
         dir_card.setObjectName("CardFrame")
         dl = QVBoxLayout(dir_card)
@@ -120,7 +143,7 @@ class SettingsPage(QWidget):
         dl.addWidget(self.dirs_edit)
         c_layout.addWidget(dir_card)
 
-        # 3. Speech & Voice Card
+        # 4. Speech & Voice Card
         voice_card = QFrame()
         voice_card.setObjectName("CardFrame")
         vl = QVBoxLayout(voice_card)
@@ -153,7 +176,16 @@ class SettingsPage(QWidget):
         scroll.setWidget(container)
         layout.addWidget(scroll, 1)
 
+    def _on_theme_changed(self, new_theme: str):
+        self.settings.theme = new_theme
+        self.settings.save()
+        self.theme_changed.emit(new_theme)
+
     def _save_preferences(self):
+        new_theme = self.theme_combo.currentText()
+        self.settings.theme = new_theme
+        self.theme_changed.emit(new_theme)
+
         self.settings.ai_provider = self.provider_combo.currentText()
         new_key = self.key_input.text().strip()
         if new_key:
@@ -168,12 +200,15 @@ class SettingsPage(QWidget):
             self.settings.approved_directories = clean_dirs
 
         self.settings.save()
-        QMessageBox.information(self, "Settings Saved", "Your configuration has been updated.")
-
+        self.provider_changed.emit(self.settings.ai_provider)
+        QMessageBox.information(self, "Settings Saved", f"Configuration updated. Active theme: {new_theme.upper()}.")
 
     def _reset_defaults(self):
+        self.theme_combo.setCurrentText("dark")
+        self.provider_combo.setCurrentText("openai")
         self.auto_safe_chk.setChecked(True)
         self.require_confirm_chk.setChecked(True)
         self.tts_enable_chk.setChecked(True)
         self.dirs_edit.setPlainText(str(Path.cwd()))
+        self._on_theme_changed("dark")
         QMessageBox.information(self, "Reset", "Values restored to defaults. Click 'Save Preferences' to persist.")

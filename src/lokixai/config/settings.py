@@ -20,8 +20,11 @@ DEFAULT_APPROVED_DIRS = [
 class AppSettings(BaseModel):
     """Central configuration for LokiXAI application."""
 
+    # UI Appearance Theme: "dark", "light", or "system"
+    theme: str = Field(default="dark", description="UI theme: dark, light, or system")
+
     # AI Provider settings
-    ai_provider: str = Field(default="openai", description="Active AI provider: openai, local, or mock")
+    ai_provider: str = Field(default="openai", description="Active AI provider: openai or local")
     openai_api_key: Optional[str] = Field(default=None, description="OpenAI API key")
     openai_model: str = Field(default="gpt-4o", description="Default OpenAI model")
     openai_embedding_model: str = Field(default="text-embedding-3-small", description="OpenAI embedding model")
@@ -53,6 +56,12 @@ class AppSettings(BaseModel):
     @classmethod
     def load(cls, config_path: Optional[Path] = None) -> AppSettings:
         """Load settings from environment and persistent JSON file."""
+        try:
+            from dotenv import load_dotenv
+            load_dotenv()
+        except Exception:
+            pass
+
         data_dir = Path("data")
         data_dir.mkdir(parents=True, exist_ok=True)
         json_file = config_path or (data_dir / "settings.json")
@@ -65,10 +74,18 @@ class AppSettings(BaseModel):
             except Exception:
                 loaded_data = {}
 
+        # Enforce Zero-Mock policy: do not allow legacy mock in normal app
+        if loaded_data.get("ai_provider") == "mock":
+            loaded_data["ai_provider"] = "openai"
+
         # Overlay environment variables if present
         env_provider = os.getenv("LOKIXAI_AI_PROVIDER")
-        if env_provider:
-            loaded_data["ai_provider"] = env_provider
+        if env_provider and env_provider.lower() != "mock":
+            loaded_data["ai_provider"] = env_provider.lower()
+
+        env_theme = os.getenv("LOKIXAI_THEME")
+        if env_theme:
+            loaded_data["theme"] = env_theme.lower()
 
         env_key = os.getenv("OPENAI_API_KEY")
         if env_key:

@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.lokixai.config.settings import get_settings
-from src.lokixai.config.theme import STYLESHEET
+from src.lokixai.config.theme import ThemeManager
 from src.lokixai.monitoring.system_monitor import SystemMetrics, get_system_monitor
 from src.lokixai.tools.system_tools import SetMuteTool, GetVolumeTool
 from src.lokixai.ui.components import Header, RightPanel, Sidebar
@@ -64,8 +64,8 @@ class MainWindow(QMainWindow):
         self.settings = get_settings()
         self.monitor = get_system_monitor()
 
-        # Apply dark futuristic styling
-        self.setStyleSheet(STYLESHEET)
+        # Apply user configured theme (Dark, Light, or System)
+        ThemeManager.apply_theme(self, self.settings.theme)
 
         self._init_ui()
         self._start_telemetry_timer()
@@ -116,6 +116,8 @@ class MainWindow(QMainWindow):
         # Wire navigation and quick commands
         self.overview_page.quick_command_submitted.connect(self._route_quick_command)
         self.model_hub_page.model_changed.connect(self._on_model_changed)
+        self.settings_page.theme_changed.connect(self.apply_theme)
+        self.settings_page.provider_changed.connect(lambda p: self.header.set_model_label(p, self.settings.openai_model))
 
         page_list = [
             ("overview", self.overview_page),
@@ -165,6 +167,9 @@ class MainWindow(QMainWindow):
             self.sidebar.set_active("screen")
             self._on_navigate("screen")
             self.screen_page._capture_screen()
+
+    def apply_theme(self, theme_name: str):
+        ThemeManager.apply_theme(self, theme_name)
 
     def _on_model_changed(self, provider: str, model: str):
         self.header.set_model_label(provider.upper(), model)

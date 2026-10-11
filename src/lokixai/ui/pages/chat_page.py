@@ -40,14 +40,6 @@ class ChatInputTextEdit(QPlainTextEdit):
         super().__init__(parent)
         self.setPlaceholderText("Ask LokiXAI anything or command laptop settings... (Enter to send, Shift+Enter for newline)")
         self.setFixedHeight(44)
-        self.setStyleSheet("""
-            background-color: #0c1322;
-            border: 1px solid #1e293b;
-            border-radius: 8px;
-            color: #f8fafc;
-            padding: 8px 10px;
-            font-size: 13px;
-        """)
 
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() in (Qt.Key_Return, Qt.Key_Enter):
@@ -334,15 +326,28 @@ class ChatPage(QWidget):
         """Convert basic markdown (headers, code blocks, lists, bold) to styled HTML."""
         escaped = html.escape(raw_text)
 
+        # Detect active theme for adaptive code block colors
+        from src.lokixai.config.settings import get_settings
+        from src.lokixai.config.theme import ThemeManager
+        theme_setting = get_settings().theme
+        if theme_setting == "system":
+            theme_setting = ThemeManager.get_system_theme()
+        is_light = (theme_setting == "light")
+
+        code_bg = "#f1f5f9" if is_light else "#0c1322"
+        code_border = "#cbd5e1" if is_light else "#1e293b"
+        code_color = "#0369a1" if is_light else "#38bdf8"
+        inline_color = "#0284c7" if is_light else "#00f2fe"
+
         # Code blocks
         def _code_block(match):
             code = match.group(1).strip()
-            return f'<div style="background-color: #0c1322; border: 1px solid #1e293b; border-radius: 6px; padding: 10px; margin: 8px 0; font-family: Consolas, monospace; color: #38bdf8; white-space: pre-wrap;">{code}</div>'
+            return f'<div style="background-color: {code_bg}; border: 1px solid {code_border}; border-radius: 6px; padding: 10px; margin: 8px 0; font-family: Consolas, monospace; color: {code_color}; white-space: pre-wrap;">{code}</div>'
 
         escaped = re.sub(r'```(?:[a-zA-Z0-9_\-]+)?\n(.*?)```', _code_block, escaped, flags=re.DOTALL)
 
         # Inline code
-        escaped = re.sub(r'`([^`]+)`', r'<code style="background-color: #0c1322; padding: 2px 5px; border-radius: 4px; color: #00f2fe; font-family: monospace;">\1</code>', escaped)
+        escaped = re.sub(r'`([^`]+)`', rf'<code style="background-color: {code_bg}; padding: 2px 5px; border-radius: 4px; color: {inline_color}; font-family: monospace;">\1</code>', escaped)
 
         # Bold
         escaped = re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', escaped)
@@ -442,17 +447,13 @@ class ChatPage(QWidget):
 
     def _add_user_message(self, text: str):
         bubble = QFrame()
-        bubble.setStyleSheet("""
-            background-color: #1e293b;
-            border-radius: 12px;
-            padding: 12px;
-            margin-left: 80px;
-        """)
+        bubble.setObjectName("UserBubble")
+        bubble.setStyleSheet("padding: 12px; margin-left: 80px;")
         l = QVBoxLayout(bubble)
         h = QLabel("You")
-        h.setStyleSheet("font-size: 11px; font-weight: 700; color: #00f2fe;")
+        h.setStyleSheet("font-size: 11px; font-weight: 700; color: #0284c7;")
         t = QLabel(text)
-        t.setStyleSheet("font-size: 13px; color: #f8fafc;")
+        t.setStyleSheet("font-size: 13px;")
         t.setWordWrap(True)
         t.setTextInteractionFlags(Qt.TextSelectableByMouse)
         l.addWidget(h)
@@ -462,32 +463,20 @@ class ChatPage(QWidget):
 
     def _create_assistant_bubble_widget(self) -> QFrame:
         bubble = QFrame()
-        bubble.setStyleSheet("""
-            background-color: #131d31;
-            border: 1px solid #1e293b;
-            border-radius: 12px;
-            padding: 12px;
-            margin-right: 80px;
-        """)
+        bubble.setObjectName("AssistantBubble")
+        bubble.setStyleSheet("padding: 12px; margin-right: 80px;")
         l = QVBoxLayout(bubble)
         l.setSpacing(6)
 
         # Bubble header with copy button
         top = QHBoxLayout()
         h = QLabel("⚡ LokiXAI")
-        h.setStyleSheet("font-size: 11px; font-weight: 700; color: #00f2fe;")
+        h.setStyleSheet("font-size: 11px; font-weight: 700; color: #0284c7;")
         top.addWidget(h)
         top.addStretch()
 
         copy_btn = QPushButton("📋 Copy")
         copy_btn.setFixedSize(56, 22)
-        copy_btn.setStyleSheet("""
-            background-color: #0c1322;
-            border: 1px solid #1e293b;
-            border-radius: 4px;
-            color: #94a3b8;
-            font-size: 10px;
-        """)
         copy_btn.setCursor(Qt.PointingHandCursor)
         copy_btn.clicked.connect(lambda: self._copy_bubble_text(bubble))
         top.addWidget(copy_btn)
@@ -495,7 +484,7 @@ class ChatPage(QWidget):
 
         t = QLabel("")
         t.setObjectName("BubbleText")
-        t.setStyleSheet("font-size: 13px; color: #f8fafc; line-height: 1.45;")
+        t.setStyleSheet("font-size: 13px; line-height: 1.45;")
         t.setWordWrap(True)
         t.setTextInteractionFlags(Qt.TextSelectableByMouse)
         t.setTextFormat(Qt.RichText)

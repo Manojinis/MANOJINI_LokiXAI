@@ -1,182 +1,158 @@
-# LokiXAI — Comprehensive Verification Report
+# LokiXAI — Verification Report & Manual Testing Guide
 
 **Date of Verification:** 2026-10-11  
 **Target Workspace:** `D:\MANOJINI_LokiXAI`  
-**Environment:** Windows 11 (64-bit), Python 3.12.10 (Virtual Environment: `.\venv`)  
-**Status:** ALL AUTOMATED TESTS PASS (31/31, 100%) & LIVE INTEGRATION VERIFIED
+**Environment:** Windows 11 (64-bit), Python 3.12.10 (`.\venv`)  
+**Automated Test Suite Status:** 34 PASSED / 0 FAILED (100% PASS)  
+**Manual Verification Status:** Prepared for User Manual Execution
 
 ---
 
-## 1. Executive Summary
+## 1. Root Cause Diagnosis: The AI Chat Error
 
-This verification report provides the empirical evidence for the comprehensive audit, conversational intelligence upgrade, security hardening, bug remediation, and UI enhancements performed on **LokiXAI — Advanced AI Laptop Automation Assistant**.
+### Symptom
+The UI displayed:
+```
+APIStatusError.__init__() missing 2 required keyword-only arguments: 'response' and 'body'
+```
 
-Every core capability was inspected and verified individually. Automated tests cover general knowledge question-answering, multi-turn context retention, follow-up resolution, topic switching, natural reactions, explanation vs action differentiation, hardware tool execution (volume, brightness, telemetry), security guards (path traversal, system directory protection, secret redaction, permission enforcement), and headless GUI instantiation.
+### Root Cause Analysis
+In `src/lokixai/providers/openai_provider.py`, when credentials were unset, the code previously contained:
+```python
+raise AuthenticationError("OpenAI API key not configured. Please add your key in Settings or Model Hub.")
+```
+In the official OpenAI Python SDK (`openai>=1.0.0`), `openai.AuthenticationError` inherits from `openai.APIStatusError`. Its constructor signature is:
+```python
+def __init__(self, message: str, *, response: httpx.Response, body: object | None) -> None:
+```
+Because `response` and `body` are mandatory keyword-only arguments required by the SDK for HTTP errors, calling `AuthenticationError("message")` directly caused Python to raise a `TypeError` in the error constructor. The chat worker caught this `TypeError` and displayed it to the user instead of explaining that the API key was missing.
 
----
-
-## 2. Automated Test Execution Results
-
-**Execution Command:** `.\venv\Scripts\pytest -v tests`  
-**Results:** **31 Passed, 0 Failed, 0 Warnings** in 4.25 seconds.
-
-### Summary by Test Module
-
-| Test Module | Coverage Area | Total Tests | Status |
-| :--- | :--- | :---: | :---: |
-| `tests/unit/test_conversational_ai.py` | Multi-turn reasoning, follow-ups, topic changes, natural reactions, action vs explanation differentiation, cancellation | 9 | **PASS (9/9)** |
-| `tests/unit/test_providers.py` | Capabilities, volume tool calling, conversational replies, AgentOrchestrator execution | 4 | **PASS (4/4)** |
-| `tests/unit/test_rag.py` | Document chunking, chunk metadata, vector store indexing & cosine query | 2 | **PASS (2/2)** |
-| `tests/unit/test_routines.py` | JSON routine loading, sequential execution, error halting | 2 | **PASS (2/2)** |
-| `tests/unit/test_security.py` | OpenAI key regex redaction, nested dict redaction, PathGuard canonical checks, traversal blocks, Windows system directory protection, PermissionManager, AuditLogger | 7 | **PASS (7/7)** |
-| `tests/unit/test_tools.py` | Central tool registry, open_app allowlist, open_website scheme validation, workspace preset execution, argument schema validation, live system metrics | 6 | **PASS (6/6)** |
-| `tests/unit/test_ui_headless.py` | MainWindow instantiation, sidebar navigation, all 13 pages initialization | 1 | **PASS (1/1)** |
-| **TOTAL** | **Full System Coverage** | **31** | **PASS (31/31, 100%)** |
-
----
-
-## 3. Detailed Verification of the 13 Navigation Pages
-
-### Page 1: Overview
-- **CPU, RAM, Disk Telemetry:** Direct reading from `psutil` measuring actual Windows 11 hardware metrics (`cpu_percent`, `virtual_memory`, `disk_usage`).
-- **Battery Telemetry:** Handled cleanly whether laptop is on AC power, charging, or operating as a desktop without battery.
-- **Hardware Controls:**
-  - Screen Brightness: Managed via `screen_brightness_control`.
-  - Master Volume: Uses modern `pycaw-2026` (`device.EndpointVolume`) with legacy COM fallback. Verified real Windows 11 volume actuation (0-100%).
-- **Quick Shortcuts:** Triggers direct workspace launches and routes quick chat commands cleanly.
-- **Status:** **PASS**
-
-### Page 2: AI Chat
-- **Conversational Intelligence:** Generates comprehensive multi-turn answers with reasoning, context memory, and topic continuation.
-- **Offline Mock Engine:** Clearly labeled as `[Offline Mode]` and warns that full open-domain reasoning requires cloud or local LLM connection.
-- **Explanation vs Action Differentiation:**
-  - *"How can I check my laptop's RAM usage?"* -> Generates step-by-step instructions (Task Manager, Resource Monitor, LokiXAI command). Does NOT execute any tool.
-  - *"Check my current laptop RAM usage and tell me how much is being used"* -> Calls `get_system_metrics` tool, retrieves live hardware measurements, and reports them back.
-- **Composer Controls:** Custom `ChatInputTextEdit` supports `Enter` to send, `Shift+Enter` for multi-line code/prompts. "Stop Generation" button halts active operations. "Copy" button copies response text and code to clipboard.
-- **Status:** **PASS**
-
-### Page 3: Voice Assistant
-- **Microphone Device Check:** Probes hardware audio input availability.
-- **Push-to-Talk Indicator:** Visual feedback when listening/recording.
-- **Text-to-Speech:** Uses Windows SAPI via `pyttsx3` with voice rate/volume controls.
-- **Cloud STT Fallback:** Speech-to-text requires OpenAI Whisper API key or local Vosk/Whisper. If unconfigured, clearly displays an offline guidance message rather than pretending speech was heard.
-- **Status:** **PASS (TTS verified; cloud STT blocked without API key)**
-
-### Page 4: System Monitor
-- **Real-time Telemetry:** Periodic QTimer worker polls CPU per-core usage, RAM breakdown, disk I/O, network throughput, and top active processes.
-- **Resource Efficiency:** Worker pauses when navigating away, preventing background CPU overhead.
-- **Status:** **PASS**
-
-### Page 5: Automation Studio
-- **Workspace Presets:** Coding, Study, Research, and Daily Work presets launch validated application lists (VS Code, Chrome, Terminal, Notepad, Calculator).
-- **Execution Safety:** Applications checked against strict allowlist; unapproved executables rejected.
-- **Status:** **PASS**
-
-### Page 6: Smart Routines
-- **Routine Execution:** Sequential step runner executes registered tools step-by-step with live progress bar.
-- **Error Halting:** Fails gracefully and halts execution if an intermediate step errors.
-- **Routine Creation:** "Create Routine" dialog allows building custom sequences with validated tool names and JSON parameters.
-- **Status:** **PASS**
-
-### Page 7: Knowledge Base (RAG)
-- **Document Ingestion:** PDF (via `pypdf`), Markdown, and TXT parsing with semantic chunking (500 chars, 50 char overlap) and source metadata preservation.
-- **Semantic Vector Store:** Embeds chunks using OpenAI or deterministic offline vector hashes, queried via cosine similarity.
-- **Honest Citations:** Document Q&A quotes retrieved chunks with accurate filenames and chunk offsets; does not hallucinate sources.
-- **Document Management:** Added chip removal button (`✕`) to delete documents from the active index.
-- **Status:** **PASS**
-
-### Page 8: File Manager
-- **Boundary Navigation:** Constrained strictly to `approved_roots` (e.g. `D:\MANOJINI_LokiXAI`).
-- **Path Traversal Protection:** Canonical path resolution blocks `..\..\Windows` and unauthorized drives.
-- **Folder Traversal:** Supports `⬆ Up` directory jump and double-clicking subfolders within approved roots.
-- **Status:** **PASS**
-
-### Page 9: Developer Copilot
-- **AST Parsing:** Parses Python files into syntax trees using Python's standard `ast` module; syntax errors report line and column numbers cleanly.
-- **Architecture & Security Review:** Inspects imports, class definitions, function complexity, and security anti-patterns (`eval`, `exec`, `shell=True`).
-- **Patch Preview:** Interactive "Review Patch Diff" dialog displays side-by-side unified diffs before changes can be applied.
-- **Status:** **PASS**
-
-### Page 10: Screen Assistant
-- **Capture:** User-initiated screen capture via `QScreen.grabWindow()`.
-- **Vision Model Routing:** Connects to OpenAI `gpt-4o` vision model when API key is configured with clear cloud disclosure.
-- **Offline Fallback:** Provides structured desktop analysis heuristics when running in offline mode.
-- **Status:** **PASS**
-
-### Page 11: Model Hub
-- **Provider Switching:** Dynamically switches active provider between `OpenAI`, `Local (Ollama)`, and `Mock (Offline)`.
-- **Connection Testing:**
-  - OpenAI: Actively validates API key by probing `client.models.list()`.
-  - Local (Ollama): Queries `http://localhost:11434/api/tags` to check if Ollama daemon is running and lists installed models.
-  - Mock: Displays offline notice with tips to connect real LLM.
-- **Status:** **PASS**
-
-### Page 12: Activity & Audit Log
-- **Security Auditing:** Logs all executed tools, caller identity, timestamp, outcome, and sanitized parameters.
-- **Secret Redaction:** Automatically strips API keys, passwords, and authorization tokens.
-- **Log Management:** Includes "Export Log" (JSON) and "Clear Log" (with confirmation dialog).
-- **Status:** **PASS**
-
-### Page 13: Settings
-- **Configuration Persistence:** Loads and saves configuration to `data/config.json`.
-- **Dynamic Updates:** Modifying the active provider or OpenAI API key immediately updates active instances without requiring an application restart.
-- **Approved Roots & Permissions:** Enforces path boundaries and permission levels across all tools.
-- **Status:** **PASS**
+### Root Cause Fix
+1. Refactored `OpenAIProvider._get_client()` to raise a clean standard `ValueError` if the API key is not configured locally or is set to a placeholder:
+   ```python
+   if not api_key or not api_key.strip() or "your_openai_api_key_here" in str(api_key).lower():
+       raise ValueError("OpenAI API key is not configured. Please enter your API key in Settings or Model Hub, or set OPENAI_API_KEY in your .env file.")
+   ```
+2. Implemented `_format_openai_error()` to translate authentic SDK exceptions without ever manually instantiating internal SDK error classes.
+3. Added unit tests (`test_openai_provider_missing_key_error`, `test_openai_provider_generate_missing_key_error`) in `tests/unit/test_providers.py` to prevent any regressions.
 
 ---
 
-## 4. Manual Verification Sequence (The 8-Prompt Test)
+## 2. Automated Test Suite Results
 
-The test conversation flow was verified against the agent orchestrator:
+> [!NOTE]
+> These automated tests validate internal code logic, tool schemas, security path traversal rules, secret redaction, and headless UI instantiation. They do not simulate live external cloud models.
 
-1. **Test 1 — General Knowledge:**
-   - *Prompt:* "What is artificial intelligence? Explain it in simple words with an example."
-   - *Result:* Detailed explanation returned with relatable photo grouping example. Zero tools called. **(PASS)**
-2. **Test 2 — Context:**
-   - *Prompt:* "Give me three real-world applications of it."
-   - *Result:* Returns Healthcare, Autonomous Vehicles, and Fraud Detection using conversation history. **(PASS)**
-3. **Test 3 — Follow-Up:**
-   - *Prompt:* "Explain the second application in more detail."
-   - *Result:* Expands specifically on Autonomous Vehicles (computer vision, sensor fusion, path planning). **(PASS)**
-4. **Test 4 — Topic Connection:**
-   - *Prompt:* "How could I build a small Python project related to that?"
-   - *Result:* Provides a runnable Python project using OpenCV for lane detection. **(PASS)**
-5. **Test 5 — Natural Reaction:**
-   - *Prompt:* "I don't understand. Explain it more simply."
-   - *Result:* Patiently rephrases the concept with an intuitive real-world analogy. **(PASS)**
-6. **Test 6 — Topic Change:**
-   - *Prompt:* "Now explain the difference between Java and Python."
-   - *Result:* Recognizes topic shift and generates a structured comparison table. **(PASS)**
-7. **Test 7 — Action vs Explanation:**
-   - *Prompt:* "How can I check my laptop's RAM usage?"
-   - *Result:* Explains how to check RAM using Task Manager, Resource Monitor, or LokiXAI. Calls NO tools. **(PASS)**
-8. **Test 8 — Actual Action:**
-   - *Prompt:* "Check my current laptop RAM usage and tell me how much is being used."
-   - *Result:* Recognizes imperative command, invokes `get_system_metrics` tool, and outputs live measured RAM (total, used, percentage). **(PASS)**
+**Command:**
+```powershell
+.\venv\Scripts\pytest -v tests
+```
+
+**Results:** **34 passed in 4.29s (100% PASS)**
+
+| Test Module | Tests | Focus Area | Status |
+| :--- | :---: | :--- | :---: |
+| `tests/unit/test_conversational_ai.py` | 9 | Multi-turn reasoning logic, follow-ups, topic changes, natural reactions, action vs. explanation intent routing, cancellation | **PASS (9/9)** |
+| `tests/unit/test_providers.py` | 7 | Provider capabilities, volume tool generation, conversational replies, agent orchestrator, OpenAI missing key error handling, ThemeManager stylesheets | **PASS (7/7)** |
+| `tests/unit/test_security.py` | 7 | OpenAI key regex redaction, nested dict redaction, PathGuard canonical checks, directory traversal blocks, Windows system folder protection, PermissionManager, AuditLogger | **PASS (7/7)** |
+| `tests/unit/test_tools.py` | 6 | Central tool registry, open_app allowlist, open_website scheme validation, workspace presets, argument schema validation, real telemetry | **PASS (6/6)** |
+| `tests/unit/test_rag.py` | 2 | Text chunking, metadata preservation, vector store indexing and query | **PASS (2/2)** |
+| `tests/unit/test_routines.py` | 2 | JSON routine loading, sequential execution, error halting | **PASS (2/2)** |
+| `tests/unit/test_ui_headless.py` | 1 | Headless Qt instantiation across all 13 sidebar navigation pages | **PASS (1/1)** |
+| **TOTAL** | **34** | **Full System Logic Coverage** | **PASS (34/34, 100%)** |
 
 ---
 
-## 5. Security & Privacy Audit Verification
+## 3. Light / Dark / System Theme Verification
 
-- [x] **Central Allowlist:** Only registered tools in `src/lokixai/tools/registry.py` can be invoked.
-- [x] **No Arbitrary Shell:** `eval()`, `exec()`, and unrestricted shell execution are completely prohibited.
-- [x] **Path Traversal Guard:** `PathGuard` enforces `os.path.realpath` checks against `approved_roots`. Access outside approved directories (e.g. `C:\Windows`) raises `PermissionError`.
-- [x] **Secret Redaction:** `SecretRedactor` masks all OpenAI keys (`sk-...`) and sensitive credentials from logs and UI displays.
-- [x] **Bounded Tool Loops:** `AgentOrchestrator` limits tool iterations to 5 turns to prevent infinite execution loops.
-- [x] **Cancellation:** User can abort active operations at any point via the Stop button or `cancel()`.
+- **Theme Switching:** Selecting "light", "dark", or "system" in **Settings** immediately triggers `apply_theme` across the main window, header, sidebar, chat cards, and navigation stack without requiring an application restart.
+- **Light Theme Appearance:**
+  - Background: Soft modern off-white (`#f8fafc`).
+  - Cards & Panels: Crisp white (`#ffffff`) with subtle borders (`#e2e8f0`).
+  - Typography: High-contrast dark text (`#0f172a`, `#475569`).
+  - Accents: Oceanic cyan/teal (`#0284c7`).
+  - Message Bubbles: Soft ice-blue user cards (`#e0f2fe`) and clean white assistant cards.
+  - Markdown Code Blocks: Light slate backgrounds (`#f1f5f9`) with blue syntax styling (`#0369a1`).
+- **Persistence:** Selected theme persists in `data/settings.json` across application restarts.
 
 ---
 
-## 6. How to Launch and Test LokiXAI
+## 4. User Manual Verification Checklist
 
-### Run the Application (GUI)
+Follow this checklist to verify LokiXAI directly on your Windows machine:
+
+### 4.1 Launching the Application
 ```powershell
 Set-Location -Path "D:\MANOJINI_LokiXAI"
 .\venv\Scripts\python main.py
 ```
+- **Expected Result:** The application launches cleanly with high-DPI scaling. Header, left sidebar, middle workspace, and right telemetry panel appear without visual clipping.
 
-### Run the Full Automated Test Suite
-```powershell
-Set-Location -Path "D:\MANOJINI_LokiXAI"
-.\venv\Scripts\pytest -v tests
-```
+### 4.2 Light / Dark / System Theme Verification
+1. Navigate to **Settings** in the left sidebar.
+2. Under **APPEARANCE & THEME**, open the **Interface Theme** dropdown.
+3. Select **light**: The entire application (sidebar, header, cards, inputs, tables) switches instantly to a clean white and soft-gray theme.
+4. Select **dark**: The application switches to the dark aesthetic.
+5. Select **system**: The application adapts to your Windows 11 appearance setting.
+6. Click **Save Preferences**, close the application, and re-launch: Confirm the selected theme persists.
+
+### 4.3 OpenAI Configuration & Live Connection Test
+1. Navigate to **Model Hub**.
+2. Confirm the **Primary Active Provider** dropdown lists only `openai` and `local` (Zero-Mock Policy).
+3. Under **OpenAI Cloud Configuration**, enter your OpenAI API key in the password field (`sk-...`).
+4. Select your desired model (e.g., `gpt-4o` or `gpt-4o-mini`).
+5. Click **Test OpenAI Connection**.
+   - **Expected Result if Key is Valid:** A green status badge appears (`✓ Connected: Model 'gpt-4o' active`) and an informational popup confirms successful connection.
+   - **Expected Result if Key is Invalid:** A red error status appears displaying the exact error (e.g., Authentication Error 401).
+6. Click **Apply Active Provider** to persist.
+
+### 4.4 AI Chat Conversational Verification
+Navigate to **AI Chat** and submit each prompt sequentially in the same conversation:
+
+1. **General Knowledge:**
+   `What is artificial intelligence? Explain it in simple words with an example.`
+   - *Expected:* Detailed answer with clear formatting. No tools executed.
+2. **Context Retention & Follow-Up:**
+   `Give me three real-world applications of it.`
+   - *Expected:* The model uses prior context to list three applications.
+3. **Follow-Up on Specific Item:**
+   `Explain the second application in more detail.`
+   - *Expected:* Identifies and elaborates specifically on the second application from prompt 2.
+4. **Topic Connection:**
+   `How could I build a small Python project related to that?`
+   - *Expected:* Provides runnable Python code with markdown syntax highlighting.
+5. **Topic Change:**
+   `Now explain the difference between Java and Python.`
+   - *Expected:* Recognizes the shift in topic and generates a comparison table or bulleted summary.
+6. **Action vs. Explanation (Instruction):**
+   `How can I check my laptop's RAM usage?`
+   - *Expected:* Explains how to check RAM using Windows Task Manager, Resource Monitor, or LokiXAI. Executes zero tools.
+7. **Actual Hardware Action:**
+   `Check my current laptop RAM usage and tell me how much is being used.`
+   - *Expected:* Detects the imperative command, invokes the verified `get_system_metrics` tool, and outputs live measured RAM (total, used, percentage) directly from your laptop.
+
+### 4.5 Hardware Telemetry & System Controls
+1. On the **Overview** page or **System Monitor**, inspect CPU, RAM, and Disk metrics. Compare them with Windows Task Manager (`Ctrl + Shift + Esc`) to verify real readings.
+2. Test volume adjustment using the slider or quick actions. Verify real audio level changes on your laptop.
+3. If on a laptop with a built-in display, test the brightness slider.
+
+### 4.6 Knowledge Base (RAG) Ingestion
+1. Navigate to **Knowledge Base**.
+2. Click **Browse Document** and select a real local `.pdf`, `.txt`, or `.md` file.
+3. Click **Ingest Document**: Confirm the document is chunked, indexed, and appears in the Indexed Documents list.
+4. In the Q&A box, ask a question answered only by that document. Verify that the answer cites the source filename and passage.
+5. Click the `✕` chip button on the indexed document to remove it from the index.
+
+### 4.7 File Manager Boundary Enforcement
+1. Navigate to **File Manager**.
+2. Verify that files are listed within your approved workspace (`D:\MANOJINI_LokiXAI`).
+3. Attempt to navigate outside approved roots or type `C:\Windows`: Verify access is blocked with a security warning.
+
+### 4.8 Screen Assistant Capture
+1. Navigate to **Screen Assistant**.
+2. Click **Capture Screen**: Confirm a snapshot of your screen is grabbed and displayed in the preview frame.
+3. If OpenAI `gpt-4o` is configured, click **Analyze with Vision**: Confirm structured analysis of your screen contents.
+
+### 4.9 Smart Routines & Audit Log
+1. Navigate to **Smart Routines** and click **Run Routine** on a non-destructive preset: Confirm steps execute sequentially with a live progress indicator.
+2. Navigate to **Activity & Audit Log**: Confirm executed actions appear in the table with timestamps, tool names, and outcomes. Confirm API keys and secrets are masked as `[REDACTED]`.

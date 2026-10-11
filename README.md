@@ -7,18 +7,19 @@
 
 ## 1. Project Overview
 
-**LokiXAI** is an advanced desktop AI assistant built in Python and PySide6 (Qt) designed to control laptop settings, stream telemetry, automate daily workflows, analyze documents via RAG, assist developers, and inspect visual screen captures—backed by a centralized cybersecurity architecture.
+**LokiXAI** is an advanced desktop AI copilot built with Python and PySide6 (Qt) designed to control Windows laptop hardware, stream telemetry, automate daily workflows, analyze documents via RAG, assist developers, and inspect visual screen captures—backed by a centralized cybersecurity architecture.
 
 ### Key Capabilities
-- **AI Chat & Agent Orchestrator:** Multi-step function calling through safe tool registries, streaming responses, context memory, and graceful fallbacks.
+- **Real AI Chat & Agent Orchestrator:** Multi-step function calling through allowlisted tool registries, streaming responses, context memory, and authentic error diagnostics with recovery guidance. Operates under a strict **Zero-Mock Policy**: never silently substitutes fake or canned responses.
+- **Light / Dark / System Themes:** Complete theme engine supporting clean Light mode, sleek futuristic Dark mode, and automatic Windows 11 system theme synchronization.
 - **Hardware Telemetry & System Controls:** Real-time CPU, RAM, disk, battery, network throughput, and uptime tracking; direct display brightness and master audio volume controls.
 - **Multi-App Workspaces:** One-click launch presets for **Coding** (VSCode + Terminal + GitHub), **Study**, **Research**, and **Daily Work**.
 - **Smart Routines Studio:** Visual routine builder with sequential execution, structured JSON definitions, and automatic stop-on-failure safety.
-- **RAG Document Assistant:** PDF/Markdown text extraction, semantic chunking, vector indexing, and passage retrieval with page-level citations.
+- **RAG Document Assistant:** PDF/Markdown text extraction, semantic chunking, vector indexing, and passage retrieval with genuine citations.
 - **Safe File Manager:** Bounded directory browsing, search, file preview, and deletion/move operations protected by confirmation dialogs and path traversal guards.
 - **Developer Copilot:** Static AST code analysis, symbol inspection (classes/functions), secret redaction, architecture reviews, and test generation.
-- **Screen-Aware Assistant:** User-initiated screenshot capture, preview thumbnail, cancel/discard protection, and structured vision analysis.
-- **Multi-Model Hub:** Dynamic switching between **OpenAI** (`gpt-4o`, `gpt-4o-mini`, `o1-mini`), local OpenAI-compatible endpoints (**Ollama**, **vLLM**), and offline deterministic core.
+- **Screen-Aware Assistant:** User-initiated screenshot capture, preview thumbnail, cancel/discard protection, and structured vision analysis via OpenAI GPT-4o.
+- **Model Hub:** Dynamic switching between **OpenAI Cloud** (`gpt-4o`, `gpt-4o-mini`, `o1-mini`) and local OpenAI-compatible endpoints (**Ollama**, **vLLM**) with active connection testing.
 - **Security & Audit Trail:** Allowlisted executables only, parameter schema validation, secret masking (API keys, tokens), and real-time immutable JSONL audit logging.
 
 ---
@@ -28,17 +29,21 @@
 ```
 LokiXAI/
 ├── main.py                     # Application entry point with high-DPI scaling & rotating logs
-├── requirements.txt            # Pinned, tested dependency configuration
-├── .env.example                # Configuration template
-├── .gitignore                  # Git ignore rules
+├── requirements.txt            # Dependency configuration
+├── .env.example                # Configuration environment template
+├── .gitignore                  # Git ignore rules (protects .env and local data)
 ├── README.md                   # Complete documentation & operational manual
+├── docs/                       # Audit, verification, and environmental issue documentation
+│   ├── IMPLEMENTATION_AUDIT.md # Discovery checklist and root-cause resolution matrix
+│   ├── VERIFICATION_REPORT.md  # Test results & step-by-step user manual verification guide
+│   └── KNOWN_ISSUES.md         # Prerequisites, environmental notes, and resolved defects
 ├── src/
 │   └── lokixai/
-│       ├── config/             # Pydantic AppSettings, dark futuristic styling (QSS)
+│       ├── config/             # AppSettings (Pydantic), ThemeManager (Light/Dark/System QSS)
 │       ├── security/           # PathGuard, PermissionManager, SecretRedactor, AuditLogger
 │       ├── monitoring/         # Real-time hardware telemetry background worker (psutil)
 │       ├── tools/              # Allowlisted system, app, and safe file tools + registry
-│       ├── providers/          # OpenAI, Ollama Local, and Mock offline model adapters
+│       ├── providers/          # OpenAI Cloud and Ollama Local provider implementations
 │       ├── ai/                 # Bounded agent orchestrator & conversation session models
 │       ├── automation/         # Workspace launchers & sequential Smart Routines engine
 │       ├── voice/              # Push-to-talk recording (STT) & non-blocking pyttsx3 (TTS)
@@ -52,104 +57,64 @@ LokiXAI/
 │           ├── components/     # Sidebar, Header, RightPanel, ConfirmationDialog
 │           └── pages/          # 13 Dedicated functional pages
 ├── tests/
-│   └── unit/                   # 22 automated unit and headless GUI tests
-└── data/                       # Local session storage, audit logs, and vector indexes
+│   └── unit/                   # 34 automated unit, headless GUI, and security tests
+└── data/                       # Local session storage, audit logs, and settings
 ```
 
 ---
 
-## 3. Installation & Setup
+## 3. Quick Start & Launch Instructions
 
-### Prerequisites
-- **Operating System:** Windows 11 (or Windows 10)
-- **Python Version:** Python 3.11 or Python 3.12 64-bit
+### 3.1 Prerequisites
+- **Operating System:** Windows 10 or Windows 11 (64-bit).
+- **Python Version:** Python 3.10 to 3.12 (Python 3.12.10 recommended).
+- **Virtual Environment:** Active virtual environment in `.\venv`.
 
-### Setup Commands (PowerShell)
-
-1. **Clone or Navigate to the Workspace:**
-   ```powershell
-   cd D:\MANOJINI_LokiXAI
-   ```
-
-2. **Create and Activate Python Virtual Environment:**
-   ```powershell
-   py -3.12 -m venv venv
-   .\venv\Scripts\Activate.ps1
-   ```
-
-3. **Install Dependencies:**
-   ```powershell
-   pip install -r requirements.txt
-   ```
-
-4. **Configure Environment Variables:**
-   Copy `.env.example` to `.env`:
-   ```powershell
-   Copy-Item .env.example .env
-   ```
-   Open `.env` in your editor and configure your OpenAI API key or local Ollama URL (optional if testing with the built-in offline mock core):
-   ```env
-   LOKIXAI_AI_PROVIDER=openai
-   OPENAI_API_KEY=sk-your-openai-api-key
-   OPENAI_MODEL=gpt-4o
-   ```
-
----
-
-## 4. Running the Application
-
-Launch the desktop copilot GUI directly from PowerShell:
-
+### 3.2 Launch the Application
+In Windows PowerShell:
 ```powershell
+Set-Location -Path "D:\MANOJINI_LokiXAI"
 .\venv\Scripts\python main.py
 ```
 
-### Launch in Zero-Key / Offline Mode
-If you don't have an OpenAI API key configured, LokiXAI automatically operates in deterministic offline mode or connects to a local Ollama instance (`http://localhost:11434/v1`). You can toggle this anytime under **Model Hub**.
-
----
-
-## 5. Running the Automated Test Suite
-
-Run pytest to verify all security assertions, tool allowlists, path traversal protections, RAG vector searches, and headless UI instantiations:
-
+### 3.3 Run Automated Tests
 ```powershell
+Set-Location -Path "D:\MANOJINI_LokiXAI"
 .\venv\Scripts\pytest -v tests
 ```
-
-Output:
-```
-tests/unit/test_providers.py ......................... PASSED
-tests/unit/test_rag.py ............................... PASSED
-tests/unit/test_routines.py .......................... PASSED
-tests/unit/test_security.py .......................... PASSED
-tests/unit/test_tools.py ............................. PASSED
-tests/unit/test_ui_headless.py ....................... PASSED
-============================= 22 passed ==============================
-```
+*Current test suite: 34 passed (100% PASS).*
 
 ---
 
-## 6. Security Architecture Guarantees
+## 4. Configuring Real AI Providers
 
-1. **Allowlisted Tools Only:** No unrestricted shell access, PowerShell eval, or arbitrary execution. Applications are launched via verified executables (`calc.exe`, `notepad.exe`, `code`, `wt.exe`, etc.).
-2. **Path Traversal Shield (`PathGuard`):** Resolves canonical paths. Files outside approved directories (or inside sensitive Windows system directories) raise `SecurityAccessDeniedError`.
-3. **Sensitive Action Modals:** Actions classified as `DESTRUCTIVE_ACTION` (e.g. file deletion, file move) trigger an explicit modal dialog showing the exact parameters before proceeding.
-4. **Credential Redaction (`SecretRedactor`):** Automatically masks OpenAI API keys (`sk-...`), Bearer tokens, GitHub keys, and password patterns in audit trails, exceptions, and console logs.
-5. **Screen Privacy:** Screenshots are strictly captured on explicit user initiation. Captured images can be previewed or discarded/deleted at any time.
+### OpenAI Cloud (Primary Provider)
+1. In the application, navigate to **Model Hub** or **Settings**.
+2. Enter your OpenAI API key in the password field (`sk-...`).
+3. Alternatively, copy `.env.example` to `.env` in the root folder and set:
+   ```env
+   OPENAI_API_KEY=sk-your-actual-api-key-here
+   OPENAI_MODEL=gpt-4o
+   ```
+4. Click **Test OpenAI Connection** in Model Hub to verify credentials against live servers.
+
+### Local AI (Ollama)
+1. Ensure Ollama is installed and running (`http://localhost:11434`).
+2. Pull a model: `ollama run llama3.2`.
+3. In Model Hub, select **local** as your active provider and click **Test Local Connection**.
 
 ---
 
-## 7. Windows Executable Packaging (PyInstaller)
+## 5. Light & Dark Theme Configuration
 
-To package LokiXAI as a standalone Windows executable:
+To switch themes:
+1. Open **Settings** in the left sidebar.
+2. Under **APPEARANCE & THEME**, select **dark**, **light**, or **system**.
+3. The UI updates instantly without restart. Click **Save Preferences** to persist your choice.
 
-1. Install PyInstaller:
-   ```powershell
-   .\venv\Scripts\pip install pyinstaller
-   ```
-2. Build executable:
-   ```powershell
-   .\venv\Scripts\pyinstaller --noconsole --name "LokiXAI" --add-data "src;src" main.py
-   ```
-3. The executable will be produced in `dist/LokiXAI/LokiXAI.exe`.
+---
+
+## 6. Manual Verification Guide
+
+For a complete step-by-step verification checklist covering real OpenAI conversations, multi-turn follow-ups, hardware actions, telemetry comparisons, and RAG document Q&A, refer to:
+[docs/VERIFICATION_REPORT.md](file:///D:/MANOJINI_LokiXAI/docs/VERIFICATION_REPORT.md)

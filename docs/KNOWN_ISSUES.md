@@ -1,16 +1,18 @@
 # LokiXAI — Known Issues & Environmental Prerequisites
 
 **Last Updated:** 2026-10-11  
-**Project:** LokiXAI — Advanced AI Laptop Automation Assistant
+**Project:** LokiXAI — Advanced AI Laptop Automation Assistant  
+**Policy:** Zero-Mock Policy for Live Operation
 
 ---
 
 ## 1. External Prerequisites & Environmental Dependencies
 
 ### 1.1 Cloud AI (OpenAI)
-- **Prerequisite:** Valid OpenAI API key (`OPENAI_API_KEY`) with active credit balance.
-- **Behavior without key:** The application runs in **Offline Mode** using `mock-offline-core`.
-- **Honest Disclosure:** The offline mode is a deterministic reasoning and tool-calling engine, not an omniscient language model. For open-ended conversation across arbitrary domains, an OpenAI key or local Ollama model must be configured in **Model Hub** or **Settings**.
+- **Prerequisite:** Valid OpenAI API key (`OPENAI_API_KEY`) configured in Settings, Model Hub, or `.env`.
+- **Behavior without key:** Under the Zero-Mock Policy, LokiXAI will clearly report:
+  `"OpenAI API key is not configured. Please enter your API key in Settings or Model Hub, or set OPENAI_API_KEY in your .env file."`
+- **Zero-Mock Policy:** LokiXAI will **never** silently substitute simulated or mock answers when the cloud API is unconfigured or unavailable. It will report the authentic status and recovery guidance.
 
 ### 1.2 Local AI (Ollama)
 - **Prerequisite:** Ollama installed and running on `http://localhost:11434` with at least one model pulled (e.g. `ollama run llama3.2`).
@@ -30,6 +32,9 @@
 
 | Issue ID | Description | Resolution Status |
 | :--- | :--- | :--- |
+| **SDK-01** | `APIStatusError.__init__() missing 2 required keyword-only arguments: 'response' and 'body'` crashed AI Chat. | **RESOLVED:** Replaced manual instantiation of SDK exceptions with standard `ValueError` for unconfigured keys, and created `_format_openai_error()` to translate genuine SDK exceptions cleanly. |
+| **THM-01** | Lacked Light Theme; hardcoded dark styles caused unreadable contrast. | **RESOLVED:** Built `ThemeManager` supporting Light (`LIGHT_STYLESHEET`), Dark (`DARK_STYLESHEET`), and Windows 11 registry System theme detection with instant UI switching and persistence. |
+| **MCK-01** | Mock provider was available in UI options and could be chosen for normal use. | **RESOLVED:** Enforced Zero-Mock policy across Model Hub, Settings, and Header. The normal UI exclusively presents real providers (OpenAI and Local Ollama). |
 | **SYM-01** | Pytest on Windows crashed with `WinError 5 Access is denied` when cleaning up dead symlinks in `%TEMP%\pytest-of-<user>`. | **RESOLVED:** Configured `pytest.ini` with `-p no:tmpdir` and established a workspace-local `tmp_path` fixture in `tests/conftest.py`. |
 | **VOL-01** | `pycaw-2024+` raised `AttributeError: AudioDevice has no attribute Activate`. | **RESOLVED:** Updated `_get_endpoint_volume()` to access `device.EndpointVolume` directly while retaining backward-compatible COM casting fallback. |
 | **DEV-01** | Missing `btn_row` variable in `developer_page.py` when building the review diff button layout. | **RESOLVED:** Added horizontal layout container `btn_row` to house the Analyze, Fix, and Review Diff buttons cleanly. |

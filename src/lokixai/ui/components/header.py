@@ -11,6 +11,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+import os
+from src.lokixai.config.settings import get_settings
 from src.lokixai.monitoring.system_monitor import SystemMetrics
 
 
@@ -90,24 +92,49 @@ class Header(QFrame):
         self.metric_pill.setText(f"CPU: {m.cpu_percent}% | RAM: {m.ram_percent}% | Bat: {bat_str}")
 
     def set_model_label(self, provider: str, model_name: str):
+        settings = get_settings()
         p_lower = provider.lower()
-        if "mock" in p_lower:
-            self.model_pill.setText("🤖 Mock Core (Offline)")
+        if p_lower == "openai":
+            has_key = bool(settings.openai_api_key or os.getenv("OPENAI_API_KEY"))
+            if has_key:
+                self.model_pill.setText(f"⚡ OPENAI: {model_name}")
+                self.model_pill.setStyleSheet("""
+                    background-color: rgba(2, 132, 199, 0.12);
+                    color: #0284c7;
+                    border: 1px solid rgba(2, 132, 199, 0.35);
+                    border-radius: 14px;
+                    padding: 4px 12px;
+                    font-size: 11px;
+                    font-weight: 600;
+                """)
+            else:
+                self.model_pill.setText("⚠️ OPENAI: Key Unset")
+                self.model_pill.setStyleSheet("""
+                    background-color: rgba(245, 158, 11, 0.12);
+                    color: #f59e0b;
+                    border: 1px solid rgba(245, 158, 11, 0.35);
+                    border-radius: 14px;
+                    padding: 4px 12px;
+                    font-size: 11px;
+                    font-weight: 600;
+                """)
+        elif p_lower in ("local", "ollama"):
+            self.model_pill.setText(f"🦙 OLLAMA: {model_name}")
             self.model_pill.setStyleSheet("""
-                background-color: rgba(245, 158, 11, 0.12);
-                color: #f59e0b;
-                border: 1px solid rgba(245, 158, 11, 0.35);
+                background-color: rgba(16, 185, 129, 0.12);
+                color: #10b981;
+                border: 1px solid rgba(16, 185, 129, 0.35);
                 border-radius: 14px;
                 padding: 4px 12px;
                 font-size: 11px;
                 font-weight: 600;
             """)
         else:
-            self.model_pill.setText(f"🤖 {provider.upper()}: {model_name}")
+            self.model_pill.setText(f"⚡ {provider.upper()}: {model_name}")
             self.model_pill.setStyleSheet("""
-                background-color: rgba(0, 242, 254, 0.12);
-                color: #00f2fe;
-                border: 1px solid rgba(0, 242, 254, 0.35);
+                background-color: rgba(2, 132, 199, 0.12);
+                color: #0284c7;
+                border: 1px solid rgba(2, 132, 199, 0.35);
                 border-radius: 14px;
                 padding: 4px 12px;
                 font-size: 11px;

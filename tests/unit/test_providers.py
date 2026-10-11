@@ -38,3 +38,33 @@ def test_agent_orchestrator_turn_with_mock():
     reply = orchestrator.process_turn(session, "set volume to 30")
     assert "Action complete" in reply or "Master volume" in reply
     assert len(session.messages) >= 2
+
+
+def test_openai_provider_missing_key_error():
+    from src.lokixai.providers.openai_provider import OpenAIProvider
+    provider = OpenAIProvider(api_key="")
+    success, msg = provider.test_connection()
+    assert success is False
+    assert "OpenAI API key is not configured" in msg
+    assert "APIStatusError" not in msg
+
+
+def test_openai_provider_generate_missing_key_error():
+    from src.lokixai.providers.openai_provider import OpenAIProvider
+    provider = OpenAIProvider(api_key="")
+    msgs = [LLMMessage(role="user", content="Hello")]
+    with pytest.raises(RuntimeError) as exc_info:
+        provider.generate(msgs)
+    assert "OpenAI API key is not configured" in str(exc_info.value)
+    assert "APIStatusError" not in str(exc_info.value)
+
+
+def test_theme_manager_stylesheets():
+    from src.lokixai.config.theme import ThemeManager, DARK_STYLESHEET, LIGHT_STYLESHEET
+    dark_qss = ThemeManager.get_stylesheet("dark")
+    light_qss = ThemeManager.get_stylesheet("light")
+    assert dark_qss == DARK_STYLESHEET
+    assert light_qss == LIGHT_STYLESHEET
+    assert dark_qss != light_qss
+    assert "#090d16" in dark_qss
+    assert "#f8fafc" in light_qss

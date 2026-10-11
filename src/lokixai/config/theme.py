@@ -1,33 +1,47 @@
-"""Theme system and dark futuristic stylesheets for LokiXAI."""
+"""Comprehensive Theme system supporting Dark, Light, and System themes for LokiXAI."""
+
+from __future__ import annotations
+
+import logging
+from typing import Optional
+
+logger = logging.getLogger("lokixai.theme")
+
 
 class ThemeColors:
-    """Dark futuristic palette with cyan, teal, and violet accents."""
-    BG_DARK = "#090d16"
-    BG_SURFACE = "#0f172a"
-    BG_CARD = "#141e33"
-    BG_CARD_HOVER = "#1c2842"
-    BG_INPUT = "#0c1322"
-    
-    BORDER_SUBTLE = "#1e293b"
-    BORDER_GLOW = "rgba(0, 242, 254, 0.45)"
-    BORDER_ACTIVE = "#00f2fe"
-    
-    PRIMARY_CYAN = "#00f2fe"
-    PRIMARY_BLUE = "#4facfe"
-    PRIMARY_PURPLE = "#8a2be2"
-    ACCENT_VIOLET = "#7928ca"
-    
-    TEXT_PRIMARY = "#f8fafc"
-    TEXT_SECONDARY = "#94a3b8"
-    TEXT_MUTED = "#64748b"
-    
+    """Color tokens for UI elements."""
+    # Dark Mode
+    DARK_BG = "#090d16"
+    DARK_SURFACE = "#0b1120"
+    DARK_CARD = "#131d31"
+    DARK_CARD_HOVER = "#1c2842"
+    DARK_INPUT = "#0c1322"
+    DARK_BORDER = "#1e293b"
+    DARK_TEXT_PRIMARY = "#f8fafc"
+    DARK_TEXT_SECONDARY = "#94a3b8"
+    DARK_TEXT_MUTED = "#64748b"
+
+    # Light Mode
+    LIGHT_BG = "#f8fafc"
+    LIGHT_SURFACE = "#ffffff"
+    LIGHT_CARD = "#ffffff"
+    LIGHT_CARD_HOVER = "#f1f5f9"
+    LIGHT_INPUT = "#ffffff"
+    LIGHT_BORDER = "#e2e8f0"
+    LIGHT_TEXT_PRIMARY = "#0f172a"
+    LIGHT_TEXT_SECONDARY = "#475569"
+    LIGHT_TEXT_MUTED = "#64748b"
+
+    # Accents
+    CYAN_ACCENT = "#00f2fe"
+    TEAL_ACCENT = "#0284c7"
+    SKY_BLUE = "#0ea5e9"
     SUCCESS = "#10b981"
     WARNING = "#f59e0b"
     DANGER = "#ef4444"
-    INFO = "#38bdf8"
 
 
-STYLESHEET = """
+DARK_STYLESHEET = """
 QMainWindow, QDialog {
     background-color: #090d16;
     color: #f8fafc;
@@ -90,7 +104,7 @@ QFrame.CardFrame, QFrame#CardFrame {
 }
 
 QFrame.CardFrame:hover, QFrame#CardFrame:hover {
-    border: 1px solid rgba(0, 242, 254, 0.3);
+    border: 1px solid rgba(0, 242, 254, 0.35);
 }
 
 /* Buttons */
@@ -111,6 +125,12 @@ QPushButton:hover {
 
 QPushButton:pressed {
     background-color: #162035;
+}
+
+QPushButton:disabled {
+    background-color: #0f172a;
+    color: #475569;
+    border-color: #1e293b;
 }
 
 QPushButton#PrimaryButton {
@@ -151,6 +171,19 @@ QLineEdit, QTextEdit, QPlainTextEdit {
 
 QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {
     border: 1px solid #00f2fe;
+}
+
+/* Chat Message Bubbles */
+QFrame#UserBubble {
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+}
+
+QFrame#AssistantBubble {
+    background-color: #131d31;
+    border: 1px solid #1e293b;
+    border-radius: 12px;
 }
 
 /* Scrollbars */
@@ -278,3 +311,314 @@ QTabBar::tab:selected {
     border-bottom: 2px solid #00f2fe;
 }
 """
+
+
+LIGHT_STYLESHEET = """
+QMainWindow, QDialog {
+    background-color: #f8fafc;
+    color: #0f172a;
+    font-family: 'Segoe UI', 'SF Pro Display', -apple-system, sans-serif;
+}
+
+QWidget {
+    color: #0f172a;
+    font-family: 'Segoe UI', -apple-system, sans-serif;
+    font-size: 13px;
+}
+
+/* Sidebar Navigation */
+QFrame#SidebarFrame {
+    background-color: #f1f5f9;
+    border-right: 1px solid #e2e8f0;
+}
+
+QPushButton#NavButton {
+    background-color: transparent;
+    color: #475569;
+    text-align: left;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: none;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+QPushButton#NavButton:hover {
+    background-color: #e2e8f0;
+    color: #0284c7;
+}
+
+QPushButton#NavButton[active="true"] {
+    background-color: rgba(2, 132, 199, 0.12);
+    color: #0284c7;
+    font-weight: 600;
+    border-left: 3px solid #0284c7;
+}
+
+/* Header & Panels */
+QFrame#HeaderFrame {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 8px 16px;
+}
+
+QFrame#RightPanelFrame {
+    background-color: #f8fafc;
+    border-left: 1px solid #e2e8f0;
+}
+
+/* Cards */
+QFrame.CardFrame, QFrame#CardFrame {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px;
+}
+
+QFrame.CardFrame:hover, QFrame#CardFrame:hover {
+    border: 1px solid #0ea5e9;
+}
+
+/* Buttons */
+QPushButton {
+    background-color: #ffffff;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 500;
+}
+
+QPushButton:hover {
+    background-color: #f1f5f9;
+    border-color: #0284c7;
+    color: #0284c7;
+}
+
+QPushButton:pressed {
+    background-color: #e2e8f0;
+}
+
+QPushButton:disabled {
+    background-color: #f1f5f9;
+    color: #94a3b8;
+    border-color: #e2e8f0;
+}
+
+QPushButton#PrimaryButton {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0284c7, stop:1 #0ea5e9);
+    color: #ffffff;
+    border: none;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 8px 18px;
+}
+
+QPushButton#PrimaryButton:hover {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0369a1, stop:1 #0284c7);
+}
+
+QPushButton#DangerButton {
+    background-color: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fca5a5;
+    border-radius: 8px;
+}
+
+QPushButton#DangerButton:hover {
+    background-color: #dc2626;
+    color: #ffffff;
+}
+
+/* Text Inputs */
+QLineEdit, QTextEdit, QPlainTextEdit {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    color: #0f172a;
+    padding: 8px 12px;
+    selection-background-color: #0284c7;
+    selection-color: #ffffff;
+}
+
+QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {
+    border: 1px solid #0284c7;
+}
+
+/* Chat Message Bubbles */
+QFrame#UserBubble {
+    background-color: #e0f2fe;
+    border: 1px solid #bae6fd;
+    border-radius: 12px;
+}
+
+QFrame#AssistantBubble {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+/* Scrollbars */
+QScrollBar:vertical {
+    border: none;
+    background: #f8fafc;
+    width: 8px;
+    margin: 0px;
+    border-radius: 4px;
+}
+
+QScrollBar::handle:vertical {
+    background: #cbd5e1;
+    min-height: 24px;
+    border-radius: 4px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #0284c7;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+QScrollBar:horizontal {
+    border: none;
+    background: #f8fafc;
+    height: 8px;
+    margin: 0px;
+    border-radius: 4px;
+}
+
+QScrollBar::handle:horizontal {
+    background: #cbd5e1;
+    min-width: 24px;
+    border-radius: 4px;
+}
+
+/* Progress Bar */
+QProgressBar {
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    text-align: center;
+    color: #0f172a;
+    font-size: 11px;
+}
+
+QProgressBar::chunk {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0284c7, stop:1 #38bdf8);
+    border-radius: 5px;
+}
+
+/* ComboBox */
+QComboBox {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 6px 12px;
+    color: #0f172a;
+}
+
+QComboBox:hover {
+    border-color: #0284c7;
+}
+
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 20px;
+    border-left: none;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #0f172a;
+    selection-background-color: rgba(2, 132, 199, 0.15);
+    selection-color: #0284c7;
+}
+
+/* Table and Tree Views */
+QTableWidget, QTreeWidget, QListWidget {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    gridline-color: #f1f5f9;
+    color: #0f172a;
+}
+
+QHeaderView::section {
+    background-color: #f8fafc;
+    color: #475569;
+    padding: 6px;
+    border: 1px solid #e2e8f0;
+    font-weight: 600;
+}
+
+QTableWidget::item:selected, QTreeWidget::item:selected, QListWidget::item:selected {
+    background-color: rgba(2, 132, 199, 0.15);
+    color: #0284c7;
+}
+
+/* Tabs */
+QTabWidget::pane {
+    border: 1px solid #e2e8f0;
+    background-color: #ffffff;
+    border-radius: 8px;
+}
+
+QTabBar::tab {
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    padding: 8px 16px;
+    margin-right: 2px;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    color: #64748b;
+}
+
+QTabBar::tab:selected {
+    background-color: #ffffff;
+    color: #0284c7;
+    border-bottom: 2px solid #0284c7;
+}
+"""
+
+# Default backward compatibility export
+STYLESHEET = DARK_STYLESHEET
+
+
+class ThemeManager:
+    """Manages application-wide theme resolution and dynamic switching."""
+
+    @staticmethod
+    def get_system_theme() -> str:
+        """Detect Windows 11 system theme via registry."""
+        try:
+            import winreg
+            key = winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER,
+                r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+            )
+            value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
+            winreg.CloseKey(key)
+            return "light" if value == 1 else "dark"
+        except Exception:
+            return "dark"
+
+    @staticmethod
+    def get_stylesheet(theme_name: str = "dark") -> str:
+        """Resolve theme name ('dark', 'light', 'system') to full QSS stylesheet."""
+        t = (theme_name or "dark").lower()
+        if t == "system":
+            t = ThemeManager.get_system_theme()
+        if t == "light":
+            return LIGHT_STYLESHEET
+        return DARK_STYLESHEET
+
+    @staticmethod
+    def apply_theme(target_widget, theme_name: str = "dark"):
+        """Apply theme to application or top-level window."""
+        qss = ThemeManager.get_stylesheet(theme_name)
+        target_widget.setStyleSheet(qss)
+        logger.info(f"Applied theme: {theme_name}")
