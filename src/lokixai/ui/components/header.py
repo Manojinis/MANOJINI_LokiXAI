@@ -36,9 +36,9 @@ class Header(QFrame):
         title_box = QVBoxLayout()
         title_box.setSpacing(0)
         self.title_lbl = QLabel("Overview")
-        self.title_lbl.setStyleSheet("font-size: 15px; font-weight: 700; color: #f8fafc;")
+        self.title_lbl.setObjectName("HeaderTitle")
         self.sub_lbl = QLabel("System telemetry and copilot command center")
-        self.sub_lbl.setStyleSheet("font-size: 11px; color: #64748b;")
+        self.sub_lbl.setObjectName("HeaderSubtitle")
         title_box.addWidget(self.title_lbl)
         title_box.addWidget(self.sub_lbl)
         layout.addLayout(title_box)
@@ -47,28 +47,12 @@ class Header(QFrame):
 
         # Telemetry Pill
         self.metric_pill = QLabel("CPU: --% | RAM: --% | Bat: --%")
-        self.metric_pill.setStyleSheet("""
-            background-color: #131d31;
-            color: #94a3b8;
-            border: 1px solid #1e293b;
-            border-radius: 14px;
-            padding: 4px 12px;
-            font-size: 11px;
-            font-weight: 500;
-        """)
+        self.metric_pill.setObjectName("PillText")
         layout.addWidget(self.metric_pill)
 
         # Active Model Pill
-        self.model_pill = QLabel("🤖 OpenAI: gpt-4o")
-        self.model_pill.setStyleSheet("""
-            background-color: rgba(0, 242, 254, 0.1);
-            color: #00f2fe;
-            border: 1px solid rgba(0, 242, 254, 0.3);
-            border-radius: 14px;
-            padding: 4px 12px;
-            font-size: 11px;
-            font-weight: 600;
-        """)
+        self.model_pill = QLabel("⚡ OPENAI: gpt-4o")
+        self.model_pill.setObjectName("PillText")
         layout.addWidget(self.model_pill)
 
         # Quick action buttons
@@ -76,6 +60,12 @@ class Header(QFrame):
         self.mute_btn.setFixedHeight(30)
         self.mute_btn.clicked.connect(lambda: self.quick_action_triggered.emit("toggle_mute"))
         layout.addWidget(self.mute_btn)
+
+        self.panel_btn = QPushButton("📊 Panel")
+        self.panel_btn.setFixedHeight(30)
+        self.panel_btn.setToolTip("Toggle Right Telemetry & Activity Panel")
+        self.panel_btn.clicked.connect(lambda: self.quick_action_triggered.emit("toggle_panel"))
+        layout.addWidget(self.panel_btn)
 
         self.screen_btn = QPushButton("📷 Analyze Screen")
         self.screen_btn.setFixedHeight(30)

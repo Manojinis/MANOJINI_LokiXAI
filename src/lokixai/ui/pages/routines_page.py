@@ -235,7 +235,8 @@ class RoutinesPage(QWidget):
         # Top action bar
         r_top = QHBoxLayout()
         self.name_lbl = QLabel(self.active_routine.name if self.active_routine else "No Routine")
-        self.name_lbl.setStyleSheet("font-size: 16px; font-weight: 700; color: #f8fafc;")
+        self.name_lbl.setObjectName("CardTitle")
+        self.name_lbl.setStyleSheet("font-size: 16px; font-weight: 700;")
         r_top.addWidget(self.name_lbl)
         r_top.addStretch()
 
@@ -247,7 +248,8 @@ class RoutinesPage(QWidget):
         self.right_l.addLayout(r_top)
 
         self.desc_lbl = QLabel(self.active_routine.description if self.active_routine else "")
-        self.desc_lbl.setStyleSheet("font-size: 12px; color: #94a3b8;")
+        self.desc_lbl.setObjectName("SubText")
+        self.desc_lbl.setStyleSheet("font-size: 12px;")
         self.desc_lbl.setWordWrap(True)
         self.right_l.addWidget(self.desc_lbl)
 
@@ -267,13 +269,7 @@ class RoutinesPage(QWidget):
         self.log_console = QPlainTextEdit()
         self.log_console.setReadOnly(True)
         self.log_console.setFixedHeight(120)
-        self.log_console.setStyleSheet("""
-            background-color: #0c1322;
-            border: 1px solid #1e293b;
-            color: #38bdf8;
-            font-family: monospace;
-            font-size: 11px;
-        """)
+        self.log_console.setStyleSheet("font-family: Consolas, monospace; font-size: 11px;")
         self.right_l.addWidget(self.log_console)
 
         content.addWidget(right_card, 1)
@@ -321,23 +317,21 @@ class RoutinesPage(QWidget):
 
         for idx, step in enumerate(self.active_routine.steps):
             f = QFrame()
-            f.setStyleSheet("""
-                background-color: #0c1322;
-                border: 1px solid #1e293b;
-                border-radius: 6px;
-                padding: 8px;
-            """)
+            f.setObjectName("InnerBox")
             hl = QHBoxLayout(f)
             hl.setContentsMargins(8, 6, 8, 6)
             
             num_lbl = QLabel(f"Step {idx + 1}:")
-            num_lbl.setStyleSheet("font-weight: 700; color: #00f2fe;")
+            num_lbl.setObjectName("SenderLabel")
+            num_lbl.setStyleSheet("font-weight: 700;")
             
             act_lbl = QLabel(f"{step.action_name} — {step.description}")
-            act_lbl.setStyleSheet("color: #f8fafc; font-size: 12px;")
+            act_lbl.setObjectName("CardTitle")
+            act_lbl.setStyleSheet("font-size: 12px; font-weight: 500;")
             
             p_lbl = QLabel(json.dumps(step.parameters))
-            p_lbl.setStyleSheet("color: #64748b; font-size: 10px; font-family: monospace;")
+            p_lbl.setObjectName("SubText")
+            p_lbl.setStyleSheet("font-size: 10px; font-family: monospace;")
 
             hl.addWidget(num_lbl)
             hl.addWidget(act_lbl)

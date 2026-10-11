@@ -85,12 +85,7 @@ class ScreenPage(QWidget):
 
         self.img_lbl = QLabel("No screenshot captured.\nClick 'Capture Screenshot' above.")
         self.img_lbl.setAlignment(Qt.AlignCenter)
-        self.img_lbl.setStyleSheet("""
-            background-color: #0c1322;
-            border: 1px dashed #1e293b;
-            border-radius: 8px;
-            color: #64748b;
-        """)
+        self.img_lbl.setObjectName("PreviewBox")
         self.img_lbl.setMinimumHeight(280)
         i_layout.addWidget(self.img_lbl, 1)
         content_box.addWidget(img_card)
@@ -107,13 +102,7 @@ class ScreenPage(QWidget):
         self.result_console = QPlainTextEdit()
         self.result_console.setReadOnly(True)
         self.result_console.setPlaceholderText("AI vision interpretation will appear here after analysis...")
-        self.result_console.setStyleSheet("""
-            background-color: #0c1322;
-            border: 1px solid #1e293b;
-            color: #38bdf8;
-            font-size: 12px;
-            line-height: 1.4;
-        """)
+        self.result_console.setStyleSheet("font-size: 12px; line-height: 1.4;")
         r_layout.addWidget(self.result_console)
         content_box.addWidget(res_card, 1)
 

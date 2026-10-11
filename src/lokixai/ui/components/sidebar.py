@@ -1,8 +1,8 @@
-"""Sidebar navigation component for LokiXAI desktop shell."""
+"""Sidebar navigation component for LokiXAI desktop shell with categorized sections."""
 
 from __future__ import annotations
 
-from typing import Callable, List, Tuple
+from typing import List, Tuple, Union
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QFrame,
@@ -10,31 +10,37 @@ from PySide6.QtWidgets import (
     QLabel,
     QPushButton,
     QScrollArea,
-    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
 
+# Nav items with optional section headers (header_text or tuple of (key, label, tooltip))
+NAV_SECTIONS: List[Union[str, Tuple[str, str, str]]] = [
+    "CORE ASSISTANT",
+    ("overview", "🏠 Overview", "Hardware Dashboard & Command Center"),
+    ("chat", "💬 AI Chat", "Context-Aware AI Conversation"),
+    ("voice", "🎙️ Voice Assistant", "Push-to-Talk Speech Copilot"),
 
-NAV_ITEMS: List[Tuple[str, str, str]] = [
-    ("overview", "🏠 Overview", "Dashboard"),
-    ("chat", "💬 AI Chat", "Conversation"),
-    ("voice", "🎙️ Voice Assistant", "Push-to-talk"),
-    ("monitor", "📊 System Monitor", "Hardware Telemetry"),
-    ("automation", "⚡ Workspaces", "App Automation"),
-    ("routines", "🔁 Smart Routines", "Workflow Sequences"),
-    ("knowledge", "📚 Knowledge Base", "RAG Documents"),
-    ("files", "📁 File Manager", "Safe Browser"),
-    ("developer", "🛠️ Developer Copilot", "Code Inspection"),
-    ("screen", "👁️ Screen Assistant", "Vision Analysis"),
-    ("model_hub", "🤖 Model Hub", "AI Providers"),
-    ("audit", "🛡️ Audit & Activity", "Security Logs"),
-    ("settings", "⚙️ Settings", "Configuration"),
+    "AUTOMATION & SYSTEM",
+    ("monitor", "📊 System Monitor", "Hardware Telemetry & Processes"),
+    ("automation", "⚡ Workspaces", "App Automation Presets"),
+    ("routines", "🔁 Smart Routines", "Sequential Workflow Automation"),
+
+    "INTELLIGENT TOOLS",
+    ("knowledge", "📚 Knowledge Base", "RAG Document Indexing & Search"),
+    ("files", "📁 File Manager", "Safe Workspace File Operations"),
+    ("developer", "🛠️ Developer Copilot", "AST Code Inspector & Review"),
+    ("screen", "👁️ Screen Assistant", "Vision Analysis of Display"),
+
+    "PREFERENCES & AUDIT",
+    ("model_hub", "🤖 Model Hub", "AI Models & Provider Settings"),
+    ("audit", "🛡️ Audit & Activity", "Security Logs & Redaction"),
+    ("settings", "⚙️ Settings", "Appearance Themes & Configuration"),
 ]
 
 
 class Sidebar(QFrame):
-    """Futuristic navigation sidebar."""
+    """Categorized navigation sidebar."""
 
     page_selected = Signal(str)
 
@@ -53,16 +59,18 @@ class Sidebar(QFrame):
         # Brand header
         brand_layout = QVBoxLayout()
         brand_layout.setSpacing(2)
-        
+
         logo_label = QLabel("⚡ LokiXAI")
-        logo_label.setStyleSheet("font-size: 20px; font-weight: 800; color: #00f2fe; letter-spacing: 1px;")
+        logo_label.setObjectName("PageTitle")
+        logo_label.setStyleSheet("font-size: 20px; font-weight: 800; letter-spacing: 1px;")
         subtitle_label = QLabel("Laptop Copilot • v1.0")
-        subtitle_label.setStyleSheet("font-size: 11px; color: #64748b; font-weight: 500;")
-        
+        subtitle_label.setObjectName("SubText")
+        subtitle_label.setStyleSheet("font-size: 11px; font-weight: 500;")
+
         brand_layout.addWidget(logo_label)
         brand_layout.addWidget(subtitle_label)
         layout.addLayout(brand_layout)
-        layout.addSpacing(14)
+        layout.addSpacing(10)
 
         # Scrollable navigation list
         scroll = QScrollArea()
@@ -74,16 +82,24 @@ class Sidebar(QFrame):
         container.setStyleSheet("background: transparent;")
         c_layout = QVBoxLayout(container)
         c_layout.setContentsMargins(0, 0, 0, 0)
-        c_layout.setSpacing(4)
+        c_layout.setSpacing(3)
 
-        for key, label, tooltip in NAV_ITEMS:
-            btn = QPushButton(label)
-            btn.setObjectName("NavButton")
-            btn.setToolTip(tooltip)
-            btn.setCursor(Qt.PointingHandCursor)
-            btn.clicked.connect(lambda checked=False, k=key: self._on_nav_click(k))
-            c_layout.addWidget(btn)
-            self.buttons[key] = btn
+        for item in NAV_SECTIONS:
+            if isinstance(item, str):
+                # Section Header
+                sec_lbl = QLabel(item)
+                sec_lbl.setObjectName("SectionTitle")
+                sec_lbl.setStyleSheet("font-size: 10px; font-weight: 700; padding-top: 10px; padding-bottom: 2px;")
+                c_layout.addWidget(sec_lbl)
+            else:
+                key, label, tooltip = item
+                btn = QPushButton(label)
+                btn.setObjectName("NavButton")
+                btn.setToolTip(tooltip)
+                btn.setCursor(Qt.PointingHandCursor)
+                btn.clicked.connect(lambda checked=False, k=key: self._on_nav_click(k))
+                c_layout.addWidget(btn)
+                self.buttons[key] = btn
 
         c_layout.addStretch()
         scroll.setWidget(container)
@@ -91,18 +107,15 @@ class Sidebar(QFrame):
 
         # Security badge at bottom
         sec_frame = QFrame()
-        sec_frame.setStyleSheet("""
-            background-color: #131d31;
-            border: 1px solid #1e293b;
-            border-radius: 8px;
-            padding: 8px;
-        """)
+        sec_frame.setObjectName("InnerBox")
         sec_layout = QHBoxLayout(sec_frame)
-        sec_layout.setContentsMargins(4, 4, 4, 4)
-        
+        sec_layout.setContentsMargins(8, 8, 8, 8)
+
         sec_icon = QLabel("🔒")
-        sec_text = QLabel("Security Guard Active\nSandboxed Access")
-        sec_text.setStyleSheet("font-size: 10px; color: #94a3b8;")
+        sec_icon.setStyleSheet("font-size: 14px;")
+        sec_text = QLabel("Security Guard Active\nZero-Mock Policy")
+        sec_text.setObjectName("SubText")
+        sec_text.setStyleSheet("font-size: 10px; line-height: 1.2;")
         sec_layout.addWidget(sec_icon)
         sec_layout.addWidget(sec_text)
         layout.addWidget(sec_frame)
@@ -114,11 +127,9 @@ class Sidebar(QFrame):
         self.set_active(key)
         self.page_selected.emit(key)
 
-    def set_active(self, key: str):
-        for k, btn in self.buttons.items():
-            if k == key:
-                btn.setProperty("active", "true")
-            else:
-                btn.setProperty("active", "false")
+    def set_active(self, active_key: str):
+        for key, btn in self.buttons.items():
+            is_active = (key == active_key)
+            btn.setProperty("active", "true" if is_active else "false")
             btn.style().unpolish(btn)
             btn.style().polish(btn)

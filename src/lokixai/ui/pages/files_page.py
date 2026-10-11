@@ -121,13 +121,7 @@ class FilesPage(QWidget):
 
         self.preview_text = QPlainTextEdit()
         self.preview_text.setReadOnly(True)
-        self.preview_text.setStyleSheet("""
-            background-color: #0c1322;
-            border: 1px solid #1e293b;
-            color: #f8fafc;
-            font-family: 'Consolas', monospace;
-            font-size: 12px;
-        """)
+        self.preview_text.setStyleSheet("font-family: 'Consolas', monospace; font-size: 12px;")
         p_layout.addWidget(self.preview_text)
         splitter.addWidget(preview_card)
 

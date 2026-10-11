@@ -68,3 +68,18 @@ def test_theme_manager_stylesheets():
     assert dark_qss != light_qss
     assert "#090d16" in dark_qss
     assert "#f8fafc" in light_qss
+
+    # Verify essential high-contrast classes exist in both themes
+    required_tokens = [
+        "CardTitle",
+        "SubText",
+        "MetricValue",
+        "MetricLabel",
+        "PageTitle",
+        "SuggestionPill",
+        "PreviewBox",
+        "InnerBox",
+    ]
+    for token in required_tokens:
+        assert token in dark_qss, f"Token {token} missing in DARK_STYLESHEET"
+        assert token in light_qss, f"Token {token} missing in LIGHT_STYLESHEET"

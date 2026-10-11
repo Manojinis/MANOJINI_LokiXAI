@@ -71,13 +71,7 @@ class ConfirmationDialog(QDialog):
         param_text = QPlainTextEdit()
         param_text.setReadOnly(True)
         param_text.setPlainText(json.dumps(parameters, indent=2))
-        param_text.setStyleSheet("""
-            background-color: #0c1322;
-            border: 1px solid #1e293b;
-            color: #38bdf8;
-            font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 11px;
-        """)
+        param_text.setStyleSheet("font-family: 'Consolas', 'Courier New', monospace; font-size: 11px;")
         layout.addWidget(param_text)
 
         # Buttons

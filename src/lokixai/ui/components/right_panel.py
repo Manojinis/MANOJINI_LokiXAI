@@ -117,18 +117,14 @@ class RightPanel(QFrame):
     def add_audit_event(self, ev: AuditEvent):
         # Insert event at top of feed
         item_frame = QFrame()
-        item_frame.setStyleSheet("""
-            background-color: #131d31;
-            border-left: 3px solid #00f2fe;
-            border-radius: 6px;
-            padding: 6px;
-        """)
+        item_frame.setObjectName("InnerBox")
         v = QVBoxLayout(item_frame)
         v.setContentsMargins(4, 4, 4, 4)
         v.setSpacing(2)
 
         header = QLabel(f"⚡ {ev.tool_name}")
-        header.setStyleSheet("font-weight: 600; font-size: 11px; color: #f8fafc;")
+        header.setObjectName("CardTitle")
+        header.setStyleSheet("font-weight: 600; font-size: 11px;")
 
         status_color = "#10b981" if ev.status == "SUCCESS" else "#ef4444"
         dur_str = f"{ev.duration_ms}ms" if ev.duration_ms > 0 else ""

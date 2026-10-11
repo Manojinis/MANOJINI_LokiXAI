@@ -142,8 +142,9 @@ class MainWindow(QMainWindow):
         middle_layout.addWidget(self.stack, 1)
         root_layout.addWidget(middle_widget, 1)
 
-        # 3. Contextual Right Panel
+        # 3. Contextual Right Panel (Collapsible to preserve workspace space)
         self.right_panel = RightPanel(self)
+        self.right_panel.setVisible(False)
         root_layout.addWidget(self.right_panel)
 
     def _on_navigate(self, key: str):
@@ -163,6 +164,8 @@ class MainWindow(QMainWindow):
             curr = GetVolumeTool().execute()
             is_muted = curr.data.get("is_muted", False) if curr.success and curr.data else False
             SetMuteTool().execute(mute=not is_muted)
+        elif action == "toggle_panel":
+            self.right_panel.setVisible(not self.right_panel.isVisible())
         elif action == "analyze_screen":
             self.sidebar.set_active("screen")
             self._on_navigate("screen")

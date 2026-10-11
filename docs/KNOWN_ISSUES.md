@@ -40,6 +40,8 @@
 | **DEV-01** | Missing `btn_row` variable in `developer_page.py` when building the review diff button layout. | **RESOLVED:** Added horizontal layout container `btn_row` to house the Analyze, Fix, and Review Diff buttons cleanly. |
 | **CAN-01** | `AgentOrchestrator.process_turn` reset `self.is_cancelled = False` immediately at turn start, discarding pre-turn cancellations. | **RESOLVED:** Checked `if self.is_cancelled:` at function entry before clearing the flag, aborting turns cleanly. |
 | **RAM-01** | Imperative commands like *"Check my current laptop RAM usage and tell me how much is being used"* were mistakenly categorized as how-to explanation questions due to `"tell me how"`. | **RESOLVED:** Refined regex and added imperative action prefix override (`check`, `measure`, `set`, etc.) so tool calls execute as intended while questions like *"How can I check RAM?"* return pure instructions. |
+| **THM-02** | Text illegibility in Light Theme due to hardcoded white/near-white colors (`#f8fafc`, `#ffffff`) on cards, chips, and labels. | **RESOLVED:** Audited every UI page, removed inline color overrides, and mapped all elements to semantic theme tokens (`PageTitle`, `CardTitle`, `SubText`, `MetricValue`, `SuggestionPill`, `PreviewBox`, `InnerBox`) ensuring WCAG-compliant contrast in both dark and light modes. |
+| **NAV-01** | Screen crowding from permanent 270px right telemetry panel and disorganized navigation. | **RESOLVED:** Restructured sidebar into 4 logical categories (`CORE ASSISTANT`, `AUTOMATION & SYSTEM`, `INTELLIGENT TOOLS`, `PREFERENCES & AUDIT`), and transformed the right telemetry panel into an on-demand panel toggleable via a new `📊 Panel` header button. |
 
 ---
 

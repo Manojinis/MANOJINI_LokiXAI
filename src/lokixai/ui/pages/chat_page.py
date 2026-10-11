@@ -112,7 +112,8 @@ class ChatPage(QWidget):
         # Chat top toolbar
         top_bar = QHBoxLayout()
         self.session_title_lbl = QLabel("Active Session: New Conversation")
-        self.session_title_lbl.setStyleSheet("font-size: 14px; font-weight: 700; color: #f8fafc;")
+        self.session_title_lbl.setObjectName("CardTitle")
+        self.session_title_lbl.setStyleSheet("font-size: 14px; font-weight: 700;")
         top_bar.addWidget(self.session_title_lbl)
 
         top_bar.addStretch()
@@ -129,9 +130,9 @@ class ChatPage(QWidget):
 
         # Message Scroll Area
         self.scroll = QScrollArea()
+        self.scroll.setObjectName("ChatScrollArea")
         self.scroll.setWidgetResizable(True)
         self.scroll.setFrameShape(QFrame.NoFrame)
-        self.scroll.setStyleSheet("background-color: #0b1120; border-radius: 10px; border: 1px solid #1e293b;")
 
         self.messages_container = QWidget()
         self.messages_container.setStyleSheet("background: transparent;")
@@ -150,12 +151,6 @@ class ChatPage(QWidget):
         # Command Composer Bar
         composer_frame = QFrame()
         composer_frame.setObjectName("CardFrame")
-        composer_frame.setStyleSheet("""
-            background-color: #0f172a;
-            border: 1px solid #1e293b;
-            border-radius: 12px;
-            padding: 6px;
-        """)
         c_layout = QHBoxLayout(composer_frame)
         c_layout.setContentsMargins(8, 4, 8, 4)
         c_layout.setSpacing(8)
@@ -197,7 +192,8 @@ class ChatPage(QWidget):
         l.setSpacing(8)
 
         intro = QLabel("⚡ Welcome to LokiXAI. Try one of these prompts or type your own:")
-        intro.setStyleSheet("font-size: 13px; color: #94a3b8; font-weight: 500;")
+        intro.setObjectName("SubText")
+        intro.setStyleSheet("font-size: 13px; font-weight: 500;")
         l.addWidget(intro)
 
         pills = [
@@ -212,14 +208,7 @@ class ChatPage(QWidget):
         pills_layout.setSpacing(8)
         for label, prompt in pills[:3]:
             btn = QPushButton(label)
-            btn.setStyleSheet("""
-                background-color: #141e33;
-                border: 1px solid #1e293b;
-                border-radius: 8px;
-                color: #00f2fe;
-                padding: 6px 12px;
-                font-size: 12px;
-            """)
+            btn.setObjectName("SuggestionPill")
             btn.setCursor(Qt.PointingHandCursor)
             btn.clicked.connect(lambda checked=False, p=prompt: self.send_prompt(p))
             pills_layout.addWidget(btn)
@@ -230,14 +219,7 @@ class ChatPage(QWidget):
         pills_layout2.setSpacing(8)
         for label, prompt in pills[3:]:
             btn = QPushButton(label)
-            btn.setStyleSheet("""
-                background-color: #141e33;
-                border: 1px solid #1e293b;
-                border-radius: 8px;
-                color: #38bdf8;
-                padding: 6px 12px;
-                font-size: 12px;
-            """)
+            btn.setObjectName("SuggestionPill")
             btn.setCursor(Qt.PointingHandCursor)
             btn.clicked.connect(lambda checked=False, p=prompt: self.send_prompt(p))
             pills_layout2.addWidget(btn)
@@ -370,18 +352,15 @@ class ChatPage(QWidget):
 
     def _on_tool_started(self, name: str, args: dict):
         card = QFrame()
-        card.setStyleSheet("""
-            background-color: #141e33;
-            border-left: 3px solid #f59e0b;
-            border-radius: 6px;
-            padding: 8px;
-        """)
+        card.setObjectName("InnerBox")
+        card.setStyleSheet("border-left: 3px solid #f59e0b;")
         l = QVBoxLayout(card)
         l.setSpacing(2)
         h = QLabel(f"⚙️ Calling Verified Tool: {name}")
         h.setStyleSheet("color: #f59e0b; font-weight: 700; font-size: 11px;")
         p = QLabel(f"Parameters: {json.dumps(args)}")
-        p.setStyleSheet("color: #94a3b8; font-size: 10px; font-family: monospace;")
+        p.setObjectName("SubText")
+        p.setStyleSheet("font-size: 10px; font-family: monospace;")
         l.addWidget(h)
         l.addWidget(p)
         self.msg_layout.insertWidget(self.msg_layout.count() - 1, card)
@@ -390,19 +369,16 @@ class ChatPage(QWidget):
     def _on_tool_finished(self, name: str, result: ToolResult):
         card = QFrame()
         border_col = "#10b981" if result.success else "#ef4444"
-        card.setStyleSheet(f"""
-            background-color: #141e33;
-            border-left: 3px solid {border_col};
-            border-radius: 6px;
-            padding: 8px;
-        """)
+        card.setObjectName("InnerBox")
+        card.setStyleSheet(f"border-left: 3px solid {border_col};")
         l = QVBoxLayout(card)
         l.setSpacing(2)
         status_txt = "SUCCESS" if result.success else "FAILED"
         h = QLabel(f"⚡ {name} [{status_txt}]")
         h.setStyleSheet(f"color: {border_col}; font-weight: 700; font-size: 11px;")
         m = QLabel(result.message)
-        m.setStyleSheet("color: #f8fafc; font-size: 11px;")
+        m.setObjectName("MessageText")
+        m.setStyleSheet("font-size: 11px;")
         m.setWordWrap(True)
         l.addWidget(h)
         l.addWidget(m)

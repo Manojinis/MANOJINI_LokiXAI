@@ -77,7 +77,8 @@ class AutomationPage(QWidget):
         icon = QLabel(ws.icon)
         icon.setStyleSheet("font-size: 24px;")
         title = QLabel(ws.name)
-        title.setStyleSheet("font-size: 16px; font-weight: 700; color: #f8fafc;")
+        title.setObjectName("CardTitle")
+        title.setStyleSheet("font-size: 16px; font-weight: 700;")
         top.addWidget(icon)
         top.addWidget(title)
         top.addStretch()
@@ -99,9 +100,9 @@ class AutomationPage(QWidget):
         urls_txt = f"Websites: {', '.join(ws.urls) if ws.urls else 'None'}"
         
         a_lbl = QLabel(apps_txt)
-        a_lbl.setStyleSheet("font-size: 11px; color: #38bdf8; background-color: #0c1322; padding: 4px 8px; border-radius: 4px;")
+        a_lbl.setObjectName("PillText")
         u_lbl = QLabel(urls_txt)
-        u_lbl.setStyleSheet("font-size: 11px; color: #a78bfa; background-color: #0c1322; padding: 4px 8px; border-radius: 4px;")
+        u_lbl.setObjectName("PillText")
         pills_box.addWidget(a_lbl)
         pills_box.addWidget(u_lbl)
         pills_box.addStretch()

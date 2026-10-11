@@ -54,6 +54,91 @@ QWidget {
     font-size: 13px;
 }
 
+/* Typography & Labels */
+QLabel {
+    color: #f8fafc;
+}
+
+QLabel#PageTitle {
+    font-size: 18px;
+    font-weight: 700;
+    color: #00f2fe;
+}
+
+QLabel#PageSubtitle {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+QLabel#CardTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+QLabel#SectionTitle {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.5px;
+}
+
+QLabel#SubText {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+QLabel#MetricValue {
+    font-size: 22px;
+    font-weight: 800;
+    color: #00f2fe;
+}
+
+QLabel#MetricLabel {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+}
+
+QLabel#HeaderTitle {
+    font-size: 15px;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+QLabel#HeaderSubtitle {
+    font-size: 11px;
+    color: #64748b;
+}
+
+QLabel#PillText {
+    background-color: #131d31;
+    color: #94a3b8;
+    border: 1px solid #1e293b;
+    border-radius: 14px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+QLabel#SenderLabel {
+    font-size: 11px;
+    font-weight: 700;
+    color: #00f2fe;
+}
+
+QLabel#MessageText {
+    font-size: 13px;
+    color: #f8fafc;
+}
+
+QLabel#PreviewBox {
+    background-color: #0c1322;
+    border: 1px dashed #1e293b;
+    border-radius: 8px;
+    color: #64748b;
+}
+
 /* Sidebar Navigation */
 QFrame#SidebarFrame {
     background-color: #0b1120;
@@ -64,7 +149,7 @@ QPushButton#NavButton {
     background-color: transparent;
     color: #94a3b8;
     text-align: left;
-    padding: 10px 14px;
+    padding: 9px 12px;
     border-radius: 8px;
     border: none;
     font-size: 13px;
@@ -95,7 +180,7 @@ QFrame#RightPanelFrame {
     border-left: 1px solid #1e293b;
 }
 
-/* Cards */
+/* Cards & Containers */
 QFrame.CardFrame, QFrame#CardFrame {
     background-color: #131d31;
     border: 1px solid #1e293b;
@@ -105,6 +190,20 @@ QFrame.CardFrame, QFrame#CardFrame {
 
 QFrame.CardFrame:hover, QFrame#CardFrame:hover {
     border: 1px solid rgba(0, 242, 254, 0.35);
+}
+
+QFrame#BannerCard {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0f172a, stop:1 #1e1b4b);
+    border: 1px solid #1e293b;
+    border-radius: 14px;
+    padding: 18px;
+}
+
+QFrame#InnerBox, QFrame.InnerBox {
+    background-color: #0c1322;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 10px;
 }
 
 /* Buttons */
@@ -156,6 +255,21 @@ QPushButton#DangerButton {
 QPushButton#DangerButton:hover {
     background-color: #ef4444;
     color: #ffffff;
+}
+
+QPushButton#SuggestionPill {
+    background-color: #131d31;
+    color: #94a3b8;
+    border: 1px solid #1e293b;
+    border-radius: 12px;
+    padding: 6px 14px;
+    font-size: 11px;
+}
+
+QPushButton#SuggestionPill:hover {
+    background-color: #1c2842;
+    color: #00f2fe;
+    border-color: #00f2fe;
 }
 
 /* Text Inputs */
@@ -326,6 +440,91 @@ QWidget {
     font-size: 13px;
 }
 
+/* Typography & Labels */
+QLabel {
+    color: #0f172a;
+}
+
+QLabel#PageTitle {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0284c7;
+}
+
+QLabel#PageSubtitle {
+    font-size: 12px;
+    color: #475569;
+}
+
+QLabel#CardTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+QLabel#SectionTitle {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.5px;
+}
+
+QLabel#SubText {
+    font-size: 12px;
+    color: #475569;
+}
+
+QLabel#MetricValue {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0284c7;
+}
+
+QLabel#MetricLabel {
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+}
+
+QLabel#HeaderTitle {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+QLabel#HeaderSubtitle {
+    font-size: 11px;
+    color: #64748b;
+}
+
+QLabel#PillText {
+    background-color: #ffffff;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    border-radius: 14px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+QLabel#SenderLabel {
+    font-size: 11px;
+    font-weight: 700;
+    color: #0284c7;
+}
+
+QLabel#MessageText {
+    font-size: 13px;
+    color: #0f172a;
+}
+
+QLabel#PreviewBox {
+    background-color: #f1f5f9;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    color: #64748b;
+}
+
 /* Sidebar Navigation */
 QFrame#SidebarFrame {
     background-color: #f1f5f9;
@@ -336,7 +535,7 @@ QPushButton#NavButton {
     background-color: transparent;
     color: #475569;
     text-align: left;
-    padding: 10px 14px;
+    padding: 9px 12px;
     border-radius: 8px;
     border: none;
     font-size: 13px;
@@ -367,7 +566,7 @@ QFrame#RightPanelFrame {
     border-left: 1px solid #e2e8f0;
 }
 
-/* Cards */
+/* Cards & Containers */
 QFrame.CardFrame, QFrame#CardFrame {
     background-color: #ffffff;
     border: 1px solid #e2e8f0;
@@ -377,6 +576,20 @@ QFrame.CardFrame, QFrame#CardFrame {
 
 QFrame.CardFrame:hover, QFrame#CardFrame:hover {
     border: 1px solid #0ea5e9;
+}
+
+QFrame#BannerCard {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #f0f9ff, stop:1 #e0f2fe);
+    border: 1px solid #bae6fd;
+    border-radius: 14px;
+    padding: 18px;
+}
+
+QFrame#InnerBox, QFrame.InnerBox {
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px;
 }
 
 /* Buttons */
@@ -428,6 +641,21 @@ QPushButton#DangerButton {
 QPushButton#DangerButton:hover {
     background-color: #dc2626;
     color: #ffffff;
+}
+
+QPushButton#SuggestionPill {
+    background-color: #ffffff;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 6px 14px;
+    font-size: 11px;
+}
+
+QPushButton#SuggestionPill:hover {
+    background-color: #f1f5f9;
+    color: #0284c7;
+    border-color: #0284c7;
 }
 
 /* Text Inputs */

@@ -52,19 +52,15 @@ class OverviewPage(QWidget):
 
         # Welcome Banner
         banner = QFrame()
-        banner.setStyleSheet("""
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0f172a, stop:1 #1e1b4b);
-            border: 1px solid #1e293b;
-            border-radius: 14px;
-            padding: 18px;
-        """)
+        banner.setObjectName("BannerCard")
         b_layout = QVBoxLayout(banner)
         b_layout.setSpacing(6)
 
         b_title = QLabel("LokiXAI Intelligent Copilot")
-        b_title.setStyleSheet("font-size: 20px; font-weight: 800; color: #00f2fe;")
+        b_title.setObjectName("PageTitle")
+        b_title.setStyleSheet("font-size: 20px; font-weight: 800;")
         b_desc = QLabel("Your laptop hardware telemetry is active. Ready to automate approved workflows, control settings, or assist with code.")
-        b_desc.setStyleSheet("font-size: 13px; color: #94a3b8;")
+        b_desc.setObjectName("SubText")
         b_desc.setWordWrap(True)
 
         b_layout.addWidget(b_title)
@@ -183,10 +179,10 @@ class OverviewPage(QWidget):
         l.setSpacing(6)
 
         t_lbl = QLabel(title)
-        t_lbl.setStyleSheet("font-size: 11px; font-weight: 700; color: #64748b;")
+        t_lbl.setObjectName("MetricLabel")
 
         v_lbl = QLabel(init_val)
-        v_lbl.setStyleSheet("font-size: 22px; font-weight: 800; color: #00f2fe;")
+        v_lbl.setObjectName("MetricValue")
 
         p_bar = QProgressBar()
         p_bar.setRange(0, 100)
@@ -194,7 +190,7 @@ class OverviewPage(QWidget):
         p_bar.setTextVisible(False)
 
         s_lbl = QLabel(subtitle)
-        s_lbl.setStyleSheet("font-size: 11px; color: #94a3b8;")
+        s_lbl.setObjectName("SubText")
 
         l.addWidget(t_lbl)
         l.addWidget(v_lbl)
@@ -213,7 +209,7 @@ class OverviewPage(QWidget):
         icon_lbl = QLabel(icon)
         icon_lbl.setStyleSheet("font-size: 20px;")
         title_lbl = QLabel(name)
-        title_lbl.setStyleSheet("font-size: 15px; font-weight: 700; color: #f8fafc;")
+        title_lbl.setObjectName("CardTitle")
         h.addWidget(icon_lbl)
         h.addWidget(title_lbl)
         h.addStretch()
@@ -224,7 +220,7 @@ class OverviewPage(QWidget):
         h.addWidget(btn)
 
         d_lbl = QLabel(desc)
-        d_lbl.setStyleSheet("font-size: 12px; color: #94a3b8;")
+        d_lbl.setObjectName("SubText")
         d_lbl.setWordWrap(True)
 
         l.addLayout(h)

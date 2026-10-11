@@ -122,14 +122,7 @@ class KnowledgePage(QWidget):
 
         for doc_name, entry in list(self.store.indexed_files.items()):
             chip = QPushButton(f"📄 {doc_name} ({entry.chunk_count} chunks) ✕")
-            chip.setStyleSheet("""
-                background-color: #141e33;
-                border: 1px solid #1e293b;
-                border-radius: 6px;
-                color: #38bdf8;
-                padding: 4px 10px;
-                font-size: 11px;
-            """)
+            chip.setObjectName("SuggestionPill")
             chip.setToolTip("Click to remove from index")
             chip.clicked.connect(lambda checked=False, name=doc_name: self._remove_doc(name))
             self.chips_layout.addWidget(chip)
@@ -194,7 +187,8 @@ class KnowledgePage(QWidget):
         # Header with source and score
         top = QHBoxLayout()
         source_lbl = QLabel(f"📄 {r.chunk.document_name} — Page {r.chunk.page_number}")
-        source_lbl.setStyleSheet("font-weight: 700; color: #00f2fe; font-size: 12px;")
+        source_lbl.setObjectName("SenderLabel")
+        source_lbl.setStyleSheet("font-weight: 700; font-size: 12px;")
         
         score_lbl = QLabel(f"Relevance: {int(r.similarity_score * 100)}%")
         score_lbl.setStyleSheet("font-size: 11px; color: #10b981; font-weight: 600;")
@@ -206,7 +200,7 @@ class KnowledgePage(QWidget):
 
         # Passage text
         text_lbl = QLabel(r.chunk.text)
-        text_lbl.setStyleSheet("color: #f8fafc; font-size: 12px; line-height: 1.4;")
+        text_lbl.setStyleSheet("font-size: 12px; line-height: 1.4;")
         text_lbl.setWordWrap(True)
         text_lbl.setTextInteractionFlags(Qt.TextSelectableByMouse)
         l.addWidget(text_lbl)

@@ -110,13 +110,7 @@ class DeveloperPage(QWidget):
 
         self.console = QPlainTextEdit()
         self.console.setReadOnly(True)
-        self.console.setStyleSheet("""
-            background-color: #0c1322;
-            border: 1px solid #1e293b;
-            color: #38bdf8;
-            font-family: 'Consolas', monospace;
-            font-size: 12px;
-        """)
+        self.console.setStyleSheet("font-family: 'Consolas', monospace; font-size: 12px;")
         c_layout.addWidget(self.console)
         splitter.addWidget(console_card)
 
